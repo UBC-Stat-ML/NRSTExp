@@ -1,11 +1,10 @@
-using Pkg
-Pkg.add(url="git@github.com:UBC-Stat-ML/NRST.jl.git") # bump to latest version
+using Pkg; Pkg.update()
 using NRST
 using NRST.ExamplesGallery
-using NRSTExperiments
+using NRSTExp
 
 tm  = MvNormalTM(32,4.,2.)
-rng = SplittableRandom(0x0123456789abcdfe)
+rng = SplittableRandom(20191018)
 ns, ts = NRSTSampler(
     tm,
     rng,

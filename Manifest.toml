@@ -1040,7 +1040,7 @@ version = "2.1.7"
 
 [[deps.SplittableRandoms]]
 deps = ["Random"]
-git-tree-sha1 = "0fe7f67a44349581c0504e203ca6031ae25c94c3"
+git-tree-sha1 = "965b46eaca7ed7d24103e45882fda58e05e8cdbf"
 repo-rev = "main"
 repo-url = "git@github.com:miguelbiron/SplittableRandoms.jl.git"
 uuid = "8efc31e9-3fb0-4277-b18c-5a3d5d07abad"
