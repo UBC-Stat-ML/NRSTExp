@@ -1,12 +1,10 @@
 process update_deps {
   label 'local_job'
-  output:
-  stdout
 
   """
-  pwd
+  julia --project -e "using Pkg; Pkg.update()"
   """  
 }
 workflow {
-  update_deps | view
+  update_deps
 }
