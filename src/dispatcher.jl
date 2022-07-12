@@ -20,13 +20,11 @@ function dispatch()
     exper  = ARGS[1]
     model  = ARGS[2]
     maxcor = parse(Float64, ARGS[3])
-    dfres=dispatch(exper,model,maxcor)
+    dfres  = dispatch(exper,model,maxcor)
     
     # write data
-    fn = "$(exper)_$(model)_$(round(maxcor,digits=2)).csv"
-    mkdir("output")
-    fp = joinpath("output", fn)
-    CSV.write(fp, dfres)
+    fn = "NRSTExp_$(exper)_$(model)_$(round(maxcor,digits=2)).csv"
+    CSV.write(fn, dfres)
     return
 end
 
@@ -35,9 +33,10 @@ function dispatch(
     model::String,
     maxcor::AbstractFloat
     )
+    rng = SplittableRandom(0x0123456789abcdfe) # seed the (p)rng
+
     # load model
     # should at least produce a TemperedModel
-    rng = SplittableRandom(0x0123456789abcdfe)
     need_build = true
     if model == "MvNormal"
         tm = MvNormalTM(32,4.,2.)
