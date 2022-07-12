@@ -2,8 +2,7 @@ workflow {
   exps_ch = Channel.of('ess_versus_cost')
   mods_ch = Channel.of('MvNormal')
   cors_ch = Channel.of(0.99)
-  updateDeps
-  runExp(exps_ch, mods_ch, cors_ch)
+  updateDeps | runExp(exps_ch, mods_ch, cors_ch)
 }
 
 process updateDeps {
