@@ -14,19 +14,34 @@
 
 opt_N(Λ) = ceil(Int, Λ*(1+sqrt(1 + inv(1+2Λ))))
 
+# for calling from the command line
 function dispatch()
     # parse arguments
     exper  = ARGS[1]
     model  = ARGS[2]
     maxcor = parse(Float64, ARGS[3])
+    dfres=dispatch(exper,model,maxcor)
+    
+    # write data
+    fn = "$(exper)_$(model)_$(round(maxcor,digits=2)).csv"
+    mkdir("output")
+    fp = joinpath("output", fn)
+    CSV.write(fp, dfres)
+    return
+end
 
+function dispatch(
+    exper::String,
+    model::String,
+    maxcor::AbstractFloat
+    )
     # load model
     # should at least produce a TemperedModel
     rng = SplittableRandom(0x0123456789abcdfe)
     need_build = true
-    if model == "mvNormals"
+    if model == "MvNormal"
         tm = MvNormalTM(32,4.,2.)
-        Λ  = 5.3 # best estimate of true barrier        
+        Λ  = 5.32 # best estimate of true barrier        
 
         # do special tuning with exact free_energy
         N = opt_N(Λ)
@@ -69,12 +84,5 @@ function dispatch()
     else
         throw(ArgumentError("Experiment $exper not yet implemented."))
     end
-
-    # write data
-    fn = "$(exper)_$(model)_$(round(maxcor,digits=2)).csv"
-    mkdir("output")
-    fp = joinpath("output", fn)
-    CSV.write(fp, dfres)
-
-    return
+    return dfres
 end
