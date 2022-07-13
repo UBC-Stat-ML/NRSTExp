@@ -1,3 +1,3 @@
 workflow {
-  Channel.value(workflow.projectDir) | view
+  Channel.of(workflow.projectDir, launchDir) | view
 }
