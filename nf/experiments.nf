@@ -1,3 +1,5 @@
+deliverableDir = 'deliverables/' + workflow.scriptName.replace('.nf','')
+
 // note: must be launched from the (.+)Exp pkg base dir
 workflow {
   // define the grid of parameters over which to run the experiments
@@ -22,7 +24,7 @@ process updateDeps {
 
 process runExp {
   label 'parallel_job'
-  publishDir 'BORRAR', mode: 'copy', overwrite: true
+  publishDir deliverableDir, mode: 'copy', overwrite: true
   input:
     path 'juliapath'
     val exper
