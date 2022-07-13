@@ -1,3 +1,3 @@
 workflow {
-  Channel.value($workflow.projectDir) | view
+  Channel.value(workflow.projectDir) | view
 }
