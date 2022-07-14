@@ -75,7 +75,7 @@ function ess_versus_cost(
     end
 
     # convert to DataFrame and return
-    df = mapreduce(((k,v),) -> insertcols!(DataFrame(v), :model => k), append!, dres)
+    df = mapreduce(((k,v),) -> insertcols!(DataFrame(v), :proc => k), append!, dres)
     return df
 end
 
