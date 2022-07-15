@@ -23,10 +23,8 @@ function dispatch()
     dfres  = dispatch(exper,model,maxcor)
     
     # write data
-    od = mkdir("output")
     fn = "E:$(exper)_M:$(model)_MC:$(round(maxcor,digits=2)).csv"
-    fp = joinpath(od, fn)
-    CSV.write(fp, dfres)
+    CSV.write(fn, dfres)
     return
 end
 
