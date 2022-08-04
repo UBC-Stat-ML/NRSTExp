@@ -23,10 +23,12 @@ function dispatch()
     dfres  = dispatch(exper,model,maxcor)
     
     # write data
-    od = mkdir("output")
-    fn = "E:$(exper)_M:$(model)_MC:$(round(maxcor,digits=2)).csv"
-    fp = joinpath(od, fn)
-    CSV.write(fp, dfres)
+    fn = "NRSTExp_" * Dates.format(Dates.now(), "yyyymmddHHMMSSs")
+    argnms = ["exper", "model", "maxcor"]
+    open(fn * ".tsv", "w") do io
+        writedlm(io, [argnms ARGS])
+    end
+    CSV.write(fn * ".csv", dfres)
     return
 end
 
