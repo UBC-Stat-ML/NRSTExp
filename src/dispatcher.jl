@@ -4,12 +4,6 @@
 #   1) experiment
 #   2) model
 #   3) maxcor
-# TODO: need a "setup" script before running this script that 
-#   - pulls latest changes for our repos: easiest way is to simply Pkg.update()
-#   - this strategy requires pushing Manifest.toml, which in general is not 
-#     advisable but it simplifies greatly our situation
-# TODO: put all tests inside a Nextflow script. use Alex's tutorial in
-#   https://github.com/UBC-Stat-ML/nextflow-notes
 ###############################################################################
 
 opt_N(Λ) = ceil(Int, Λ*(1+sqrt(1 + inv(1+2Λ))))
