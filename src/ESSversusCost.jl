@@ -27,7 +27,7 @@ end
 function ess_versus_cost(
     ns::NRSTSampler{T,TI,TF},
     rng::AbstractRNG,
-    ntours::Int = 10000,
+    ntours::Int = 4000,
     nreps::Int  = 30
     ) where {T,TI,TF}
     N      = ns.np.N
