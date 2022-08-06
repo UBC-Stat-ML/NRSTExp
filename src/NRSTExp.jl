@@ -6,7 +6,6 @@ using Dates: Dates
 using DelimitedFiles: writedlm
 using CSV: CSV
 using NRST
-using NRST.ExamplesGallery
 
 include("dispatcher.jl")
 export dispatch
@@ -16,5 +15,8 @@ export ess_versus_cost
 # sub-modules
 include("IdealIndexProcesses/IdealIndexProcesses.jl")
 using .IdealIndexProcesses
+
+include("ExamplesGallery/ExamplesGallery.jl")
+using .ExamplesGallery
 
 end # module
