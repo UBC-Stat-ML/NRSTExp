@@ -27,7 +27,7 @@ end
 function ess_versus_cost(
     ns::NRSTSampler{T,TI,TF},
     rng::AbstractRNG,
-    ntours::Int = 4000,
+    ntours::Int = 5000,
     nreps::Int  = 30
     ) where {T,TI,TF}
     N      = ns.np.N
@@ -79,43 +79,3 @@ function ess_versus_cost(
     return df
 end
 
-# #######################################
-# # plot with Plots GR
-# #######################################
-
-# xlticks = make_log_ticks(
-#     collect(Base.Flatten([extrema(Base.Flatten(zip(tup.xs,tup.xp))) for (_,tup) in dres]))
-# )
-# ylticks = make_log_ticks(
-#     collect(Base.Flatten([extrema(tup.y) for (_,tup) in dres]))
-# )
-# pcs     = plot(
-#     xlabel = "Computational time",
-#     ylabel = "ESS bound @ cold level",# palette = DEF_PAL, 
-#     legend = :bottomright,
-#     xticks = (xlticks, ["10^{$e}" for e in xlticks]),
-#     yticks = (ylticks, ["10^{$e}" for e in ylticks])
-# )
-
-# # iterate dres, smooth, and plot
-# i = 0
-# for (k,v) in dres
-#     # k="DTAct";v=dres["DTAct"]
-#     i += 1
-#     # parallel
-#     idx = sortperm(v.xp)
-#     sx  = v.xp[idx]
-#     spl = fit(SmoothingSpline, sx, v.y[idx], .1);
-#     plot!(
-#         pcs, sx, predict(spl), label = k*"Par", linewidth=2,
-#         linecolor = okabe_ito[i], linestyle = :solid
-#     )
-#     # serial
-#     idx = sortperm(v.xs)
-#     sx  = v.xs[idx]
-#     spl = fit(SmoothingSpline, sx, v.y[idx], .1);
-#     plot!(
-#         pcs, sx, predict(spl), label = k*"Ser", linewidth=2,
-#         linecolor = okabe_ito[i], linestyle = :dash
-#     )
-# end
