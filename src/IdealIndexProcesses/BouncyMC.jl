@@ -37,11 +37,9 @@ function tour!(bouncy::BouncyMC{TF,TI};verbose::Bool=false) where {TF,TI}
         verbose && println((t,y,e))
         next_y = y + e                # attempt move
         if next_y > N                 # bounce above
-            y = one(TI)
             e = -one(TI)
-            bouncy.nhits[] += one(TI) # increment bounce-above counter
+            bouncy.nhits[] += one(TI) # increment bounce-above counter. Note: we don't count the second visit to N, but this is irrelevant for TE since the 2 factor cancels
         elseif next_y < zero(TI)      # bounce below and exit loop
-            y = zero(TI)
             e = one(TI)
             break
         elseif rand() < bouncy.R[y+one(TI), e>zero(TI) ? 1 : 2]
