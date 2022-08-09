@@ -8,6 +8,7 @@ using IrrationalConstants: twoπ, log2π
 using Lattices: Square, edges
 using LinearAlgebra: I
 using UnPack: @unpack
+using ..NRSTExp: NRSTExp
 import NRST: NRST, TemperedModel, TuringTemperedModel, V, Vref
 import Base: rand
 
