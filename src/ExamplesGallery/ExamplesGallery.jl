@@ -3,8 +3,10 @@ module ExamplesGallery
 using DelimitedFiles: readdlm
 using Distributions
 using DynamicPPL
+using FillArrays: fill
 using IrrationalConstants: twoπ, log2π
 using Lattices: Square, edges
+using LinearAlgebra: I
 using UnPack: @unpack
 import NRST: NRST, TemperedModel, TuringTemperedModel, V, Vref
 import Base: rand
