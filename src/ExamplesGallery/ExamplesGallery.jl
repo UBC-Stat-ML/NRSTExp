@@ -24,4 +24,9 @@ export XYModel
 include("Testing/mvNormals.jl") # example with multivariate Normals admitting closed form expressions
 export MvNormalTM, free_energy, get_scaled_V_dist
 
+# define Turing models at startup so they are available when called inside dispatch
+function __init__()
+    include(pkgdir(NRSTExp, "src", "ExamplesGallery", "Turing", "hierarchical_model_dppl.jl"))
+end
+
 end
