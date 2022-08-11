@@ -56,7 +56,7 @@ function dispatch(
         tm = XYModel(8)
         Λ  = 5.25 # best estimate of true barrier        
     elseif model == "HierarchicalModel"
-        tm = NRST.TuringTemperedModel(HierarchicalModelWithData)
+        tm = HierarchicalModel()
         Λ  = 4.7 # best estimate of true barrier        
     else
         throw(ArgumentError("Model $model not yet implemented."))
