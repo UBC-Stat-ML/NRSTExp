@@ -7,6 +7,7 @@ using FillArrays: fill
 using IrrationalConstants: twoπ, log2π
 using Lattices: Square, edges
 using LinearAlgebra: I
+using LogExpFunctions: logistic
 using UnPack: @unpack
 using ..NRSTExp: NRSTExp
 import NRST: NRST, TemperedModel, TuringTemperedModel, V, Vref
@@ -14,7 +15,9 @@ import Base: rand
 
 # Turing
 include("Turing/hierarchical_model.jl")
+include("Turing/challenger.jl")
 export HierarchicalModel
+export ChalLogistic
 
 # Physics
 include("Physics/XY_model.jl")
