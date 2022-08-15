@@ -54,10 +54,13 @@ function dispatch(
         need_build = false
     elseif model == "XYModel"
         tm = XYModel(8)
-        Λ  = 5.25 # best estimate of true barrier        
+        Λ  = 5.25        
     elseif model == "HierarchicalModel"
         tm = HierarchicalModel()
-        Λ  = 4.7 # best estimate of true barrier        
+        Λ  = 4.7
+    elseif model == "Challenger"
+        tm = ChalLogistic()
+        Λ  = 4.          
     else
         throw(ArgumentError("Model $model not yet implemented."))
     end
