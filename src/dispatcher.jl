@@ -60,7 +60,7 @@ function dispatch(
         Λ  = 4.7
     elseif model == "Challenger"
         tm = ChalLogistic()
-        Λ  = 4.          
+        Λ  = 4.2
     else
         throw(ArgumentError("Model $model not yet implemented."))
     end

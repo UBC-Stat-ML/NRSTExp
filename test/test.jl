@@ -8,18 +8,24 @@ dispatch()
 # julia --project -e "using NRSTExp" ess_versus_cost HierarchicalModel 0.99
 # ./julia -e "using NRSTExp; dispatch()" ess_versus_cost HierarchicalModel 0.99
 
-using NRSTExp.ExamplesGallery
 using NRST
+using NRSTExp.ExamplesGallery
+using Plots
+using Plots.PlotMeasures: px
+using ColorSchemes: okabe_ito
 
 tm = ChalLogistic();
-rng = SplittableRandom(1312)
+r = SplittableRandom(1313)
 ns, ts = NRSTSampler(
     tm,
-    rng,
-    N = 10,
-    verbose = true
+    r,
+    N = 11,
+    verbose = true,
+    do_stage_2 = false,
+    maxcor = 0.8
 );
-res   = parallel_run(ns, rng, ntours = ts.ntours)
+copyto!(ns.np.c, free_energy(tm, ns.np.betas)); # use exact free energy
+res   = parallel_run(ns, r, ntours=10000, keep_xs=false);
 plots = diagnostics(ns, res)
 hl    = ceil(Int, length(plots)/2)
 pdiags=plot(
