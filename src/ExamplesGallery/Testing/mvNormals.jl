@@ -1,6 +1,3 @@
-using IrrationalConstants: log2π
-using Distributions: NoncentralChisq
-
 # Define a `TemperedModel` type and implement `NRST.V`, `NRST.Vref`, and `Base.rand` 
 struct MvNormalTM{TI<:Int,TF<:AbstractFloat} <: TemperedModel
     d::TI
@@ -9,8 +6,8 @@ struct MvNormalTM{TI<:Int,TF<:AbstractFloat} <: TemperedModel
     s0sq::TF
 end
 MvNormalTM(d,m,s0) = MvNormalTM(d,m,s0,s0*s0)
-V(tm::MvNormalTM, x) = 0.5mapreduce(xi -> abs2(xi - tm.m), +, x) # 0 allocs, versus "x .- m" which allocates a temp
-Vref(tm::MvNormalTM, x) = 0.5sum(abs2,x)/tm.s0sq
+NRST.V(tm::MvNormalTM, x) = 0.5mapreduce(xi -> abs2(xi - tm.m), +, x) # 0 allocs, versus "x .- m" which allocates a temp
+NRST.Vref(tm::MvNormalTM, x) = 0.5sum(abs2,x)/tm.s0sq
 Base.rand(tm::MvNormalTM, rng) = tm.s0*randn(rng,tm.d)
 
 # Write methods for the analytical expressions for ``\mu_b``, 

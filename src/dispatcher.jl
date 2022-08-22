@@ -42,7 +42,7 @@ function dispatch(
 
         # do special tuning with exact free_energy
         N = opt_N(Λ)
-        ns, ts = NRSTSampler(
+        ns = NRSTSampler(
             tm,
             rng,
             N = N,
@@ -60,7 +60,7 @@ function dispatch(
         Λ  = 4.7
     elseif model == "Challenger"
         tm = ChalLogistic()
-        Λ  = 4.2
+        Λ  = 4.0
     else
         throw(ArgumentError("Model $model not yet implemented."))
     end
@@ -68,7 +68,7 @@ function dispatch(
     # build and tune sampler
     if need_build
         N  = opt_N(Λ)
-        ns, ts = NRSTSampler(
+        ns = NRSTSampler(
             tm,
             rng,
             N = N,
