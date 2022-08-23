@@ -29,7 +29,7 @@ ns = NRSTSampler(
             verbose = true,
             maxcor = maxcor
         )
-res   = parallel_run(ns, rng, ntours = 10000)
+res   = parallel_run(ns, rng, ntours = 32768)
 plots = diagnostics(ns, res)
 hl    = ceil(Int, length(plots)/2)
 pdiags=plot(
@@ -81,45 +81,6 @@ pcover = plot(
     showaxis = false, legend = false, colorbar = false
 )
 
-###############################################################################
-###############################################################################
-
-using Plots
-using Plots.PlotMeasures: px
-using NRST
-using NRSTExp
-using NRSTExp.ExamplesGallery
-
-rng   = SplittableRandom(0x0123456789abcdfe)
-ns    = NRSTSampler(HierarchicalModel(), rng, N = 10, verbose = true)
-res   = parallel_run(ns, rng, ntours = 32768)
-plots = diagnostics(ns, res)
-hl    = ceil(Int, length(plots)/2)
-pdiags=plot(
-    plots..., layout = (hl,2), size = (900,hl*333),left_margin = 40px,
-    right_margin = 40px
-)
-
-#md # ![Diagnostics plots](assets/hierarchical_model/diags.png)
-
-# ## Notes on the results
-# ### Inspecting within and between-group std. devs.
-X = hcat([exp.(0.5*x[1:2]) for x in res.xarray[end]]...)
-pcover = scatter(
-    X[1,:],X[2,:], xlabel="τ: between-groups std. dev.",
-    markeralpha = min(1., max(0.08, 1000/size(X,2))),
-    ylabel="σ: within-group std. dev.", label=""
-)
-
-nrpt = NRPTSampler(ns);
-tr = NRST.NRPTTrace(ns.np.N,10);
-NRST.step!(nrpt, rng,tr)
-NRST.get_perm(nrpt)
-xpls = NRST.get_xpls(nrpt);
-[xpl.curβ[] for xpl in xpls]
-[NRST.params(xpl)[1] for (i,xpl) in enumerate(xpls)]
-ns.np.xplpars
-
 
 ###############################################################################
 ###############################################################################
@@ -135,16 +96,9 @@ rng = SplittableRandom(1313)
 tm = MvNormalTM(32,4.,2.)
 Λ  = 5.32 # best estimate of true barrier
 N = opt_N(Λ)
-ns = NRSTSampler(
-    tm,
-    rng,
-    N = N,
-    verbose = true,
-    do_stage_2 = false,
-    maxcor = maxcor
-)
+ns = NRSTSampler(tm, rng, N = N, verbose = true, maxcor = maxcor);
 copyto!(ns.np.c, free_energy(tm, ns.np.betas)) # use exact free energy
-res   = parallel_run(ns, rng, ntours=10000, keep_xs=false);
+res   = parallel_run(ns, rng, ntours=32768, keep_xs=false);
 plots = diagnostics(ns, res)
 hl    = ceil(Int, length(plots)/2)
 pdiags=plot(
@@ -157,13 +111,13 @@ pdiags=plot(
 # ## Distribution of the potential
 # We compare the sample distribution of (properly scaled) ``V(x)`` obtained 
 # using various sampling strategies against the analytic distribution.
-ntours = 10_000
+ntours = 32768
 sbsq(b)= NRSTExp.ExamplesGallery.sbsq(tm, b)
 xpls   = NRST.replicate(ns.xpl, ns.np.betas);
 trVs   = NRST.collectVs(ns.np, xpls, rng, ceil(Int, sum(ns.np.nexpls)/ns.np.N)*ntours);
 resser = NRST.SerialRunResults(NRST.run!(ns, rng, nsteps=2*ns.np.N*ntours));
 restur = NRST.run_tours!(ns, rng, ntours=ntours, keep_xs=false);
-resPT  = NRST.rows2vov(NRST.run!(NRST.NRPTSampler(ns),rng,10_000).Vs);
+resPT  = NRST.rows2vov(NRST.run!(NRST.NRPTSampler(ns),rng,ntours).Vs);
 parr   = []
 for (i,trV) in enumerate(trVs)
     β     = ns.np.betas[i]
@@ -186,10 +140,57 @@ for (i,trV) in enumerate(trVs)
 end
 N  = ns.np.N
 nc = min(N+1, ceil(Int,sqrt(N+1)))
-nr = ceil(Int, (N+1)/nc)
 for i in (N+2):(nc*nr)
     push!(parr, plot(ticks=false, showaxis = false, legend = false))
 end
 pdists = plot(
     parr..., layout = (nr,nc), size = (300*nc,333*nr)
+)
+
+
+truc = free_energy(tm, ns.np.betas)
+truc .-= truc[1]
+copyto!(ns.np.c, truc) # use exact free energy
+NRST.STEPSTONE_FWD_WEIGHT[] = 1.
+NRST.tune_c!(ns.np, parallel_run(ns, rng, ntours=2 ^ 17, keep_xs=false, verbose=false))
+plot(ns.np.c .- truc, label="w=1.")
+copyto!(ns.np.c, truc) # use exact free energy
+NRST.STEPSTONE_FWD_WEIGHT[] = 0.
+NRST.tune_c!(ns.np, parallel_run(ns, rng, ntours=2 ^ 17, keep_xs=false, verbose=false))
+plot!(ns.np.c .- truc, label="w=0.")
+copyto!(ns.np.c, truc) # use exact free energy
+NRST.STEPSTONE_FWD_WEIGHT[] = 0.5
+NRST.tune_c!(ns.np, parallel_run(ns, rng, ntours=2 ^ 17, keep_xs=false, verbose=false))
+plot!(ns.np.c .- truc, label="w=0.5")
+
+
+###############################################################################
+###############################################################################
+
+using Plots
+using Plots.PlotMeasures: px
+using NRST
+using NRSTExp
+using NRSTExp.ExamplesGallery
+
+rng   = SplittableRandom(123)
+tm    = HierarchicalModel()
+ns    = NRSTSampler(tm, rng, N = 10, verbose = true)
+res   = parallel_run(ns, rng, ntours = ns.np.N*2^14)
+plots = diagnostics(ns, res)
+hl    = ceil(Int, length(plots)/2)
+pdiags=plot(
+    plots..., layout = (hl,2), size = (900,hl*333),left_margin = 40px,
+    right_margin = 40px
+)
+
+#md # ![Diagnostics plots](assets/hierarchical_model/diags.png)
+
+# ## Notes on the results
+# ### Inspecting within and between-group std. devs.
+X = hcat([exp.(0.5*x[1:2]) for x in res.xarray[end]]...)
+pcover = scatter(
+    X[1,:],X[2,:], xlabel="τ: between-groups std. dev.",
+    markeralpha = min(1., max(0.08, 1000/size(X,2))),
+    ylabel="σ: within-group std. dev.", label=""
 )

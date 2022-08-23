@@ -3,7 +3,7 @@ module ExamplesGallery
 using DelimitedFiles: readdlm
 using Distributions
 using DynamicPPL
-using FillArrays: fill
+using FillArrays: Fill
 using IrrationalConstants: twoπ, log2π
 using Lattices: Square, edges
 using LinearAlgebra: I

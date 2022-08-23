@@ -19,7 +19,7 @@ function chal_load_data()
 end
 
 # methods for the prior
-Vref(tm::ChalLogistic, x) = -logpdf(MvNormal(2, tm.σ₀), x)
+NRST.Vref(tm::ChalLogistic, x) = -logpdf(MvNormal(2, tm.σ₀), x)
 Base.rand(tm::ChalLogistic, rng) = tm.σ₀ * randn(rng, 2)
 
 # method for the likelihood potential
@@ -30,9 +30,9 @@ Base.rand(tm::ChalLogistic, rng) = tm.σ₀ * randn(rng, 2)
 # => log[p(xβ)] = -log[1+exp(-xβ)] = -log1pexp(-xβ) ✓
 # 1-p(xβ) = [1+e^{-xβ}-1]/[1+e^{-xβ}] = e^{-xβ}/[1+e^{-xβ}] = 1/[1+e^{xβ}]
 # => log[1-p(xβ)] = -log[1+exp(xβ)] = -log1pexp(xβ) ✓
-function V(tm::ChalLogistic, β)
+function NRST.V(tm::ChalLogistic{TF}, β) where {TF}
     β₀ = β[1]; β₁ = β[2]
-    vacc = zero(eltype(β))
+    vacc = zero(TF)
     for (i,y) in enumerate(tm.ys)
         xβ    = β₀ + β₁*tm.xs[i]
         vacc += y ? log1pexp(-xβ) : log1pexp(xβ)
