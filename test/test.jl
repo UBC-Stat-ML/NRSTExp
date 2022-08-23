@@ -173,10 +173,18 @@ using NRST
 using NRSTExp
 using NRSTExp.ExamplesGallery
 
-rng   = SplittableRandom(123)
+Λ     = 4.7
+N     = NRSTExp.opt_N(Λ)
+rng   = SplittableRandom(0x0123456789abcdfe) # seed the (p)rng
 tm    = HierarchicalModel()
-ns    = NRSTSampler(tm, rng, N = 10, verbose = true)
-res   = parallel_run(ns, rng, ntours = ns.np.N*2^14)
+ns    = NRSTSampler(tm, rng, N = N, verbose = true);
+
+nsteps = 262144
+np = ns.np;
+xpls = NRST.replicate(ns.xpl, ns.np.betas);
+trVs = NRST.collectVs(np, xpls, rng, np.nexpls[1]*nsteps);
+NRST.tune_nexpls!(np.nexpls, trVs, 0.8);
+res   = parallel_run(ns, rng, ntours = ns.np.N*2^14);
 plots = diagnostics(ns, res)
 hl    = ceil(Int, length(plots)/2)
 pdiags=plot(
