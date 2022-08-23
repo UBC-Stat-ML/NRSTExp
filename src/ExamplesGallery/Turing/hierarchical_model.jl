@@ -31,7 +31,7 @@ function NRST.Vref(tm::HierarchicalModel{TF,TI}, x) where {TF,TI}
     acc -= logpdf(tm.σ²_prior, σ²) # σ²
     acc -= x[2]                                               # logdetjac σ²
     acc -= logpdf(Cauchy(), μ)                                # μ
-    acc -= logpdf(MvNormal(fill(μ,tm.J), τ²*I), θ)            # θ
+    acc -= logpdf(MvNormal(Fill(μ,tm.J), τ²*I), θ)            # θ
     return acc
 end
 function Base.rand(tm::HierarchicalModel{TF,TI}, rng) where {TF,TI}
