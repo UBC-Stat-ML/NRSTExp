@@ -22,7 +22,7 @@ function dispatch()
     open(fn * ".tsv", "w") do io
         writedlm(io, [argnms ARGS])
     end
-    CSV.write(fn * ".csv", dfres)
+    CSV.write(fn * ".csv.gz", dfres, compress=true) # use gzip compression
     return
 end
 

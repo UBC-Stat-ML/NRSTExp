@@ -98,7 +98,7 @@ tm = MvNormalTM(32,4.,2.)
 N = opt_N(Λ)
 ns = NRSTSampler(tm, rng, N = N, verbose = true, maxcor = maxcor);
 copyto!(ns.np.c, free_energy(tm, ns.np.betas)) # use exact free energy
-res   = parallel_run(ns, rng, ntours=32768, keep_xs=false);
+res   = parallel_run(ns, rng, ntours=2^17, keep_xs=false);
 plots = diagnostics(ns, res)
 hl    = ceil(Int, length(plots)/2)
 pdiags=plot(
@@ -175,16 +175,10 @@ using NRSTExp.ExamplesGallery
 
 Λ     = 4.7
 N     = NRSTExp.opt_N(Λ)
-rng   = SplittableRandom(0x0123456789abcdfe) # seed the (p)rng
+rng   = SplittableRandom(123) # seed the (p)rng
 tm    = HierarchicalModel()
 ns    = NRSTSampler(tm, rng, N = N, verbose = true);
-
-nsteps = 262144
-np = ns.np;
-xpls = NRST.replicate(ns.xpl, ns.np.betas);
-trVs = NRST.collectVs(np, xpls, rng, np.nexpls[1]*nsteps);
-NRST.tune_nexpls!(np.nexpls, trVs, 0.8);
-res   = parallel_run(ns, rng, ntours = ns.np.N*2^14);
+res   = parallel_run(ns, rng, ntours = 2^14);
 plots = diagnostics(ns, res)
 hl    = ceil(Int, length(plots)/2)
 pdiags=plot(
