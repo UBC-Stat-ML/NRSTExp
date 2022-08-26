@@ -5,7 +5,7 @@ push!(ARGS, "HierarchicalModel")
 push!(ARGS, "0.99")
 dispatch()
 # JULIA_PKG_USE_CLI_GIT=true julia --project -e "using Pkg; Pkg.update()"
-# julia -t 4 --project -e "using NRSTExp; dispatch()" ess_versus_cost Challenger 0.99
+# julia -t 4 --project -e "using NRSTExp; dispatch()" ess_versus_cost Challenger 1
 # julia --project -e "using NRSTExp" ess_versus_cost HierarchicalModel 0.99
 # ./julia -e "using NRSTExp; dispatch()" ess_versus_cost HierarchicalModel 0.99
 
