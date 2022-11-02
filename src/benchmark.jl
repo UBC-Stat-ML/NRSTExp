@@ -32,6 +32,10 @@ function benchmark(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
     nvevs = -1 # technically infty so its not meaningful
     saveres!(df, "DTAct", tlens, nvevs, TE)
 
+    # add other metadata
+    insertcols!(df, :N => N)
+    insertcols!(df, :Lambda => Λ)
+
     return df
 end
 
