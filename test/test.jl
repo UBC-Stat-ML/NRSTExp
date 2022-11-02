@@ -1,12 +1,7 @@
 using NRSTExp
 
-push!(ARGS, "ess_versus_cost")
-push!(ARGS, "HierarchicalModel")
-push!(ARGS, "0.99")
-dispatch()
 # JULIA_PKG_USE_CLI_GIT=true julia --project -e "using Pkg; Pkg.update()"
-# julia -t 4 --project -e "using NRSTExp; dispatch()" ess_versus_cost Challenger 1
-# julia --project -e "using NRSTExp" ess_versus_cost HierarchicalModel 0.99
+# julia -t 4 --project -e "using NRSTExp; dispatch()" exp=ess_versus_cost mod=HierarchicalModel cor=0.99
 # ./julia -e "using NRSTExp; dispatch()" ess_versus_cost HierarchicalModel 0.99
 
 using Plots
@@ -147,23 +142,6 @@ pdists = plot(
     parr..., layout = (nr,nc), size = (300*nc,333*nr)
 )
 
-
-truc = free_energy(tm, ns.np.betas)
-truc .-= truc[1]
-copyto!(ns.np.c, truc) # use exact free energy
-NRST.STEPSTONE_FWD_WEIGHT[] = 1.
-NRST.tune_c!(ns.np, parallel_run(ns, rng, ntours=2 ^ 17, keep_xs=false, verbose=false))
-plot(ns.np.c .- truc, label="w=1.")
-copyto!(ns.np.c, truc) # use exact free energy
-NRST.STEPSTONE_FWD_WEIGHT[] = 0.
-NRST.tune_c!(ns.np, parallel_run(ns, rng, ntours=2 ^ 17, keep_xs=false, verbose=false))
-plot!(ns.np.c .- truc, label="w=0.")
-copyto!(ns.np.c, truc) # use exact free energy
-NRST.STEPSTONE_FWD_WEIGHT[] = 0.5
-NRST.tune_c!(ns.np, parallel_run(ns, rng, ntours=2 ^ 17, keep_xs=false, verbose=false))
-plot!(ns.np.c .- truc, label="w=0.5")
-
-
 ###############################################################################
 ###############################################################################
 
@@ -196,3 +174,27 @@ pcover = scatter(
     markeralpha = min(1., max(0.08, 1000/size(X,2))),
     ylabel="σ: within-group std. dev.", label=""
 )
+
+
+###############################################################################
+###############################################################################
+
+using NRST
+using NRSTExp
+using NRSTExp.ExamplesGallery
+
+rng = SplittableRandom(123) # seed the (p)rng
+tm  = ChalLogistic();
+ns, TE, Λ = NRSTSampler(tm, rng, use_mean=false);
+res   = parallel_run(ns, rng, TE=TE, keep_xs=false, verbose=false);
+tlens = tourlengths(res)
+nvevs = map(tr -> NRSTExp.get_nvevals(tr,ns.np.nexpls), res.trvec)
+TE    = res.toureff[end]
+
+
+β = randn(rng, 2)
+NRST.V(tm, β)
+tmT   = NRSTExp.ExamplesGallery.ChalLogisticTuring();
+NRST.V(tmT, β) ≈ NRST.V(tm, β)
+@time NRST.V(tm, β)
+@time NRST.V(tmT, β) # about 20x slower, 25 allocations versus 1

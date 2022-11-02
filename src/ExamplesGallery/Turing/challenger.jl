@@ -49,7 +49,7 @@ end
     β₀ ~ Normal(0., 10.) # intercept
     β₁ ~ Normal(0., 10.) # slope
     for n in eachindex(ys)
-        ys[n] ~ Bernoulli(logistic(β₀ + β₁*xs[n]))
+        ys[n] ~ BernoulliLogit(β₀ + β₁*xs[n])
     end
 end
 

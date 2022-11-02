@@ -8,6 +8,7 @@ using IrrationalConstants: twoπ, log2π
 using Lattices: Square, edges
 using LinearAlgebra: I
 using LogExpFunctions: logistic, log1pexp
+using Turing: BernoulliLogit # TODO: remove once this PR is merged into Distributions.jl: https://github.com/JuliaStats/Distributions.jl/pull/1623
 using UnPack: @unpack
 using ..NRSTExp: NRSTExp
 import NRST: NRST, TemperedModel, TuringTemperedModel, V, Vref
