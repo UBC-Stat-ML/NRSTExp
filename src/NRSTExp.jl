@@ -7,10 +7,10 @@ using DelimitedFiles: writedlm
 using CSV: CSV
 using NRST
 
-include("dispatcher.jl")
 export dispatch
-include("ESSversusCost.jl")
-export ess_versus_cost
+
+include("dispatcher.jl")
+include("benchmark.jl")
 
 # sub-modules
 include("IdealIndexProcesses/IdealIndexProcesses.jl")

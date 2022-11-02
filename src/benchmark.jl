@@ -4,7 +4,7 @@
 
 TE_est(vNs::AbstractVector) = (sum(vNs) ^ 2) / (length(vNs)*sum(abs2, vNs))
 
-function ess_versus_cost(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
+function benchmark(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
     df = DataFrame() # init empty DataFrame
 
     # NRST
@@ -12,25 +12,25 @@ function ess_versus_cost(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
     tlens = tourlengths(res)
     nvevs = map(tr -> get_nvevals(tr,ns.np.nexpls), res.trvec)
     TE    = res.toureff[end]
-    saveres!(df, "NRST", rep, tlens, nvevs, TE)
+    saveres!(df, "NRST", tlens, nvevs, TE)
 
     # inputs used for ideal processes
     N = ns.np.N
     R = NRST.rejrates(res)
     Λ = sum(NRST.averej(R))
-    ntours = get_ntours(res)
+    ntours = NRST.get_ntours(res)
 
     # BouncyMC: perfect tuning
     tlens, vNs = run_tours!(BouncyMC(Λ/N,N), ntours)
     TE    = TE_est(vNs)
     nvevs = -1 # technically infty so its not meaningful
-    saveres!(df, "DTPerf", rep, tlens, nvevs, TE)
+    saveres!(df, "DTPerf", tlens, nvevs, TE)
 
     # BouncyMC: actual rejections
     tlens, vNs = run_tours!(BouncyMC(R), ntours)
     TE    = TE_est(vNs)
     nvevs = -1 # technically infty so its not meaningful
-    saveres!(df, "DTAct", rep, tlens, nvevs, TE)
+    saveres!(df, "DTAct", tlens, nvevs, TE)
 
     return df
 end
@@ -41,13 +41,11 @@ function get_nvevals(tr::NRST.NRSTTrace{T,TI}, nexpls::AbstractVector) where {T,
 end
 
 # store results into df
-function saveres!(df::AbstractDataFrame, proc, rep, tlens, nvevs, TE)
+function saveres!(df::AbstractDataFrame, proc, tlens, nvevs, TE)
     append!(df,
         DataFrame(
-            proc=proc,rep=rep,
-            cstlen=cumsum(tlens), cmtlen=accumulate(max, tlens),
-            csnvev=cumsum(nvevs), cmnvev=accumulate(max, nvevs),
-            cESS=TE*(1:length(tlens))
+            proc=proc, rtser=sum(tlens), rtpar=maximum(tlens),
+            costser=sum(nvevs), costpar=maximum(nvevs), TE=TE
         )
     )
 end

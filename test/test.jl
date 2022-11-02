@@ -179,22 +179,13 @@ pcover = scatter(
 ###############################################################################
 ###############################################################################
 
-using NRST
 using NRSTExp
-using NRSTExp.ExamplesGallery
-
-rng = SplittableRandom(123) # seed the (p)rng
-tm  = ChalLogistic();
-ns, TE, Λ = NRSTSampler(tm, rng, use_mean=false);
-res   = parallel_run(ns, rng, TE=TE, keep_xs=false, verbose=false);
-tlens = tourlengths(res)
-nvevs = map(tr -> NRSTExp.get_nvevals(tr,ns.np.nexpls), res.trvec)
-TE    = res.toureff[end]
-
-
-β = randn(rng, 2)
-NRST.V(tm, β)
-tmT   = NRSTExp.ExamplesGallery.ChalLogisticTuring();
-NRST.V(tmT, β) ≈ NRST.V(tm, β)
-@time NRST.V(tm, β)
-@time NRST.V(tmT, β) # about 20x slower, 25 allocations versus 1
+pars = Dict(
+    "exp"  => "benchmark",    
+    "mod"  => "Challenger",
+    "cor"  => "0.8",
+    "gam"  => "1.0",
+    "fun"  => "median",
+    "seed" => "125"
+)
+dispatch(pars)

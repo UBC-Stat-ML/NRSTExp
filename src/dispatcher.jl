@@ -1,15 +1,12 @@
 ###############################################################################
 # parses the ARGS from command line and executes an experiment
-# it uses positional arguments
-#   1) experiment
-#   2) model
-#   3) maxcor
 ###############################################################################
 
 # for calling from the command line
 function dispatch()
+    isinteractive() && error("This method can only be called in non-interactive mode.")
     println("This is NRSTExp! Parsing parameters...")
-    pars = Dict(map(s->eachsplit(s,"="),ARGS))
+    pars = Dict(map(s -> eachsplit(s, "="), ARGS))
     display(pars)
     println("\nLaunching experiment...")
     dfres = dispatch(pars)
@@ -19,7 +16,7 @@ function dispatch()
     open(fn * ".tsv", "w") do io
         writedlm(io, pars)
     end
-    # CSV.write(fn * ".csv.gz", dfres, compress=true) # use gzip compression
+    CSV.write(fn * ".csv.gz", dfres, compress=true) # use gzip compression
     return
 end
 
@@ -70,8 +67,8 @@ function dispatch(pars::Dict)
 
     # dispatch experiment
     # should return a dataframe that we can then save as csv
-    if exper == "ess_versus_cost"
-        dfres = ess_versus_cost(ns, rng, TE)
+    if exper == "benchmark"
+        dfres = benchmark(ns, rng, TE)
     else
         throw(ArgumentError("Experiment $exper not yet implemented."))
     end
