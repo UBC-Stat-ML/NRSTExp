@@ -17,8 +17,10 @@ import Base: rand
 # Turing
 include("Turing/hierarchical_model.jl")
 include("Turing/challenger.jl")
+include("Turing/MRNATransfection.jl")
 export HierarchicalModel
 export ChalLogistic
+export MRNATransTuring
 
 # Physics
 include("Physics/XY_model.jl")
