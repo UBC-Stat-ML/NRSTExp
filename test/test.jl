@@ -1,15 +1,25 @@
+# DEBUG THIS
+# julia --project -t 4       -e "using NRSTExp; dispatch()" exp=benchmark mod=MvNormal fun=mean cor=1.0 gam=0.75 seed=3990
+# ERROR: InexactError: trunc(Int64, NaN)
+# Stacktrace:
+#  [1] trunc
+#    @ ./float.jl:781 [inlined]
+#  [2] ceil
+#    @ ./float.jl:358 [inlined]
+#  [3] min_ntours_TE(TE::Float64, α::Float64, δ::Float64)
+
 using NRSTExp
 pars = Dict(
     "exp"  => "benchmark",    
     "mod"  => "Transfection",
     "fun"  => "median",
     "cor"  => "0.8",
-    "gam"  => "1.0",
+    "gam"  => "10.0", # TODO: fix tuning NRST, keeps jumping between Ns, old N is remembered, etc.. 
     "seed" => "125"
 )
 dispatch(pars)
 
-# julia --project -e "using NRSTExp; dispatch()" exp=benchmark mod=Challenger fun=median cor=0.8 gam=1.0 seed=125
+# julia -t 4 --project -e "using NRSTExp; dispatch()" exp=benchmark mod=Transfection fun=median cor=0.8 gam=1.0 seed=125
 
 using Distributions
 

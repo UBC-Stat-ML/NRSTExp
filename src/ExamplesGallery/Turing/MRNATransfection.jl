@@ -1,3 +1,9 @@
+#######################################
+# pure julia version
+#######################################
+
+
+
 function mrna_trans_load_data()
     dta = readdlm(pkgdir(NRSTExp, "data", "transfection.csv"), ',')
     ts  = Float64.(dta[2:end,1])

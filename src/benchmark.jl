@@ -8,7 +8,7 @@ function benchmark(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
     df = DataFrame() # init empty DataFrame
 
     # NRST
-    res   = parallel_run(ns, rng, TE=TE, keep_xs=false, verbose=false);
+    res   = parallel_run(ns, rng, TE=TE, keep_xs=false);
     tlens = tourlengths(res)
     nvevs = map(tr -> get_nvevals(tr,ns.np.nexpls), res.trvec)
     TE    = res.toureff[end]
