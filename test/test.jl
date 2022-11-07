@@ -1,4 +1,4 @@
-# julia --project -t 4       -e "using NRSTExp; dispatch()" exp=benchmark mod=MvNormal fun=mean cor=1.0 gam=4.0 seed=3990
+# julia --project -t 4       -e "using NRSTExp; dispatch()" exp=benchmark mod=MvNormal fun=mean cor=0.7 gam=4.0 seed=3990
 
 using NRSTExp
 pars = Dict(
