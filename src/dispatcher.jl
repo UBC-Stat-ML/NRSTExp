@@ -32,18 +32,20 @@ function dispatch(pars::Dict)
     # load model. should at least produce a TemperedModel
     need_build = true
     if model == "MvNormal"
-        # do special tuning with exact free_energy
         tm = MvNormalTM(32,4.,2.)
-        ns, TE, Λ = NRSTSampler(
-            tm,
-            rng,
-            use_mean   = usemean,
-            maxcor     = maxcor,
-            γ          = γ,
-            do_stage_2 = false
-        )
-        copyto!(ns.np.c, free_energy(tm, ns.np.betas)) # use exact free energy
-        need_build = false
+        if usemean
+	    # do special tuning with exact free_energy
+	    ns, TE, Λ = NRSTSampler(
+	        tm,
+	        rng,
+	        use_mean   = usemean,
+	        maxcor     = maxcor,
+	        γ          = γ,
+	        do_stage_2 = false
+	    )
+	    copyto!(ns.np.c, free_energy(tm, ns.np.betas)) # use exact free energy
+	    need_build = false
+	end
     elseif model == "XYModel"
         tm = XYModel(5)
     elseif model == "HierarchicalModel"

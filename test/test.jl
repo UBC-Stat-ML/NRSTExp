@@ -1,12 +1,4 @@
-# DEBUG THIS
-# julia --project -t 4       -e "using NRSTExp; dispatch()" exp=benchmark mod=MvNormal fun=mean cor=1.0 gam=0.75 seed=3990
-# ERROR: InexactError: trunc(Int64, NaN)
-# Stacktrace:
-#  [1] trunc
-#    @ ./float.jl:781 [inlined]
-#  [2] ceil
-#    @ ./float.jl:358 [inlined]
-#  [3] min_ntours_TE(TE::Float64, α::Float64, δ::Float64)
+# julia --project -t 4       -e "using NRSTExp; dispatch()" exp=benchmark mod=MvNormal fun=mean cor=1.0 gam=4.0 seed=3990
 
 using NRSTExp
 pars = Dict(
