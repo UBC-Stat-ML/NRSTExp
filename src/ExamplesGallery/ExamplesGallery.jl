@@ -18,9 +18,9 @@ import Base: rand
 include("Turing/hierarchical_model.jl")
 include("Turing/challenger.jl")
 include("Turing/MRNATransfection.jl")
-export HierarchicalModel
-export ChalLogistic
-export MRNATransTuring
+export HierarchicalModel, HierarchicalModelTuring
+export ChalLogistic, ChalLogisticTuring
+export MRNATrans, MRNATransTuring
 
 # Physics
 include("Physics/XY_model.jl")

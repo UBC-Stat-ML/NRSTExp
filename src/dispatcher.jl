@@ -52,8 +52,8 @@ function dispatch(pars::Dict)
         tm = HierarchicalModel()
     elseif model == "Challenger"
         tm = ChalLogistic()
-    elseif model == "Transfection"
-        tm = MRNATransTuring()
+    elseif model == "MRNATrans"
+        tm = MRNATrans()
     else
         throw(ArgumentError("Model $model not yet implemented."))
     end
