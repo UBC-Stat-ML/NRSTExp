@@ -35,6 +35,7 @@ function benchmark(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
     # add other metadata
     insertcols!(df, :N => N)
     insertcols!(df, :Lambda => Λ)
+    insertcols!(df, :ntours => ntours)
 
     return df
 end
