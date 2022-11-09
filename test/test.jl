@@ -13,3 +13,22 @@ ns, TE, Λ = NRSTSampler(
     maxcor   = 0.8,
     γ        = 4.0
 );
+
+
+
+using Distributions, DynamicPPL
+using NRST
+using NRSTExp
+using NRSTExp.ExamplesGallery
+
+# Define a model using the `DynamicPPL.@model` macro
+@model function Lnmodel(x)
+    s  ~ HalfCauchy()
+    x .~ Normal(0.,s)
+end
+
+# Now we instantiate a proper `DynamicPPL.Model` object by a passing a vector of observations
+model   = Lnmodel(randn(30))
+rng     = SplittableRandom(4)
+ns, _, _= NRSTSampler(model, rng, γ=3.0);
+

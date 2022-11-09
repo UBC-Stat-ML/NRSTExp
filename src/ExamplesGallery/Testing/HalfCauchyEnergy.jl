@@ -1,13 +1,11 @@
 # Define a `TemperedModel` type and implement `NRST.V`, `NRST.Vref`, and `Base.rand` 
 struct HalfCauchyEnergy{TF<:AbstractFloat} <: TemperedModel
-    C::Cauchy{TF}
+    HC::HalfCauchy{TF}
 end
-HalfCauchyEnergy(γ::AbstractFloat)   = HalfCauchyEnergy(Cauchy(zero(γ),γ))
+HalfCauchyEnergy(γ::AbstractFloat)   = HalfCauchyEnergy(HalfCauchy(γ))
 NRST.V(::HalfCauchyEnergy, v)        = v[1]
-function NRST.Vref(tm::HalfCauchyEnergy{TF}, v) where {TF}
-    v[1] < zero(v[1]) ? TF(Inf) : -(logtwo + logpdf(tm.C, v[1]))
-end
-Base.rand(tm::HalfCauchyEnergy, rng) = [abs(rand(rng, tm.C))]
+NRST.Vref(tm::HalfCauchyEnergy, v)   = -logpdf(tm.HC, v[1])
+Base.rand(tm::HalfCauchyEnergy, rng) = [rand(rng, tm.HC)]
 
 # numerical checks
 # using QuadGK

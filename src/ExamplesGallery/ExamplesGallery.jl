@@ -8,10 +8,15 @@ using IrrationalConstants: twoπ, log2π, logtwo
 using Lattices: Square, edges
 using LinearAlgebra: I
 using LogExpFunctions: logistic, log1pexp
+using Random: AbstractRNG
 using UnPack: @unpack
 using ..NRSTExp: NRSTExp
 import NRST: NRST, TemperedModel, TuringTemperedModel, V, Vref
 import Base: rand
+
+# utils
+include("utils.jl")
+export HalfCauchy
 
 # Turing
 include("Turing/hierarchical_model.jl")
