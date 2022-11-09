@@ -1,11 +1,5 @@
 #######################################
 # pure julia version
-# we use the fact that the base of the log used is irrelevant, so we can use
-# the LogUniform implemented in Distributions.jl
-# Then, we only need to transform the range values to the proper scale, since
-# x = exp(log(a) + u(log(b) - log(a)))
-# = exp(log(10)[log(a) + u(log(b) - log(a))]/log(10) )
-# = 10^[log10(a) + u(log10(b) - log10(a))]
 #######################################
 
 # Define a `TemperedModel` type and implement `NRST.V`, `NRST.Vref`, and `Base.rand` 
@@ -41,7 +35,7 @@ function NRST.Vref(tm::MRNATrans{TF}, x) where {TF}
     vr = zero(TF)
     for (i,x) in enumerate(x)
         if x < tm.as[i] || x > tm.bs[i] 
-            vr = Inf
+            vr = TF(Inf)
             break
         end
     end
@@ -63,7 +57,7 @@ function NRST.V(tm::MRNATrans{TF}, x) where {TF}
     for (n, t) in enumerate(tm.ts)
         tmt₀ = t - t₀
         μ    = (km₀ / δmβ) * (-expm1(-δmβ * tmt₀)) * exp(-β*tmt₀)
-        isfinite(μ) || (μ = 1e4)
+        isfinite(μ) || (μ = TF(1e4))
         acc -= logpdf(Normal(μ, σ), tm.ys[n])
     end
     return acc

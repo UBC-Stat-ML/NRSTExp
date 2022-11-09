@@ -4,11 +4,10 @@ using DelimitedFiles: readdlm
 using Distributions
 using DynamicPPL
 using FillArrays: Fill
-using IrrationalConstants: twoπ, log2π
+using IrrationalConstants: twoπ, log2π, logtwo
 using Lattices: Square, edges
 using LinearAlgebra: I
 using LogExpFunctions: logistic, log1pexp
-using Turing: BernoulliLogit # TODO: remove once this PR is merged into Distributions.jl: https://github.com/JuliaStats/Distributions.jl/pull/1623
 using UnPack: @unpack
 using ..NRSTExp: NRSTExp
 import NRST: NRST, TemperedModel, TuringTemperedModel, V, Vref
@@ -28,6 +27,8 @@ export XYModel
 
 # Testing
 include("Testing/mvNormals.jl") # example with multivariate Normals admitting closed form expressions
+include("Testing/HalfCauchyEnergy.jl")
 export MvNormalTM, free_energy, get_scaled_V_dist
+export HalfCauchyEnergy
 
 end
