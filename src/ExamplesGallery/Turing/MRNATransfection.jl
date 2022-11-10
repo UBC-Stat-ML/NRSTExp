@@ -45,6 +45,7 @@ function Random.rand!(tm::MRNATrans, rng, x)
     for (i, a) in enumerate(tm.as)
         x[i] = a + rand(rng) * tm.bma[i]
     end
+    return x
 end
 function Base.rand(tm::MRNATrans{TF}, rng) where {TF}
     rand!(tm, rng, Vector{TF}(undef, length(tm.as)))
