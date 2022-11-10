@@ -8,7 +8,8 @@ end
 MvNormalTM(d,m,s0) = MvNormalTM(d,m,s0,s0*s0)
 NRST.V(tm::MvNormalTM, x) = 0.5mapreduce(xi -> abs2(xi - tm.m), +, x) # 0 allocs, versus "x .- m" which allocates a temp
 NRST.Vref(tm::MvNormalTM, x) = 0.5sum(abs2,x)/tm.s0sq
-Base.rand(tm::MvNormalTM, rng) = tm.s0*randn(rng,tm.d)
+Random.rand!(tm::MvNormalTM, rng, x) = tm.s0 * randn!(rng, x)
+Base.rand(tm::MvNormalTM, rng) = tm.s0 * randn(rng, tm.d)
 
 # Write methods for the analytical expressions for ``\mu_b``, 
 # ``s_b^2``, and ``\mathcal{F}``

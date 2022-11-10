@@ -3,13 +3,14 @@
 #######################################
 
 # Define a `TemperedModel` type and implement `NRST.V`, `NRST.Vref`, and `Base.rand` 
-struct ChalLogistic{TF<:AbstractFloat} <: TemperedModel
+struct ChalLogistic{TF<:AbstractFloat,TMVN<:AbstractMvNormal} <: TemperedModel
     σ₀::TF
     σ₀²::TF
     xs::Vector{TF}
     ys::BitVector
+    MVN::TMVN
 end
-ChalLogistic() = ChalLogistic(10., 100., chal_load_data()...)
+ChalLogistic() = ChalLogistic(10., 100., chal_load_data()..., MvNormal(2, 10.))
 
 function chal_load_data()
     dta = readdlm(pkgdir(NRSTExp, "data", "challenger.csv"), ',')
@@ -19,8 +20,9 @@ function chal_load_data()
 end
 
 # methods for the prior
-NRST.Vref(tm::ChalLogistic, x) = -logpdf(MvNormal(2, tm.σ₀), x)
-Base.rand(tm::ChalLogistic, rng) = tm.σ₀ * randn(rng, 2)
+NRST.Vref(tm::ChalLogistic, x)         = -logpdf(tm.MVN, x)
+Random.rand!(tm::ChalLogistic, rng, x) = rand!(rng, tm.MVN, x)
+Base.rand(tm::ChalLogistic, rng)       = rand(rng, tm.MVN)
 
 # method for the likelihood potential
 # y|x,β ~ Bern(p(xβ))

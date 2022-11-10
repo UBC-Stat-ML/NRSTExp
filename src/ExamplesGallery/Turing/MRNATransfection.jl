@@ -41,8 +41,13 @@ function NRST.Vref(tm::MRNATrans{TF}, x) where {TF}
     end
     return vr
 end
-function Base.rand(tm::MRNATrans, rng)
-    tm.as .+ (rand(rng, 5) .* tm.bma)
+function Random.rand!(tm::MRNATrans, rng, x)
+    for (i, a) in enumerate(tm.as)
+        x[i] = a + rand(rng) * tm.bma[i]
+    end
+end
+function Base.rand(tm::MRNATrans{TF}, rng) where {TF}
+    rand!(tm, rng, Vector{TF}(undef, length(tm.as)))
 end
 
 # method for the likelihood potential

@@ -24,7 +24,7 @@ function invtrans(x::AbstractVector{<:AbstractFloat})
 end
 
 # methods for the prior
-function NRST.Vref(tm::HierarchicalModel{TF,TI}, x) where {TF,TI}
+function NRST.Vref(tm::HierarchicalModel{TF}, x) where {TF}
     τ², σ², μ, θ = invtrans(x)
     acc = zero(TF)
     acc -= logpdf(tm.τ²_prior, τ²) # τ²
@@ -35,8 +35,7 @@ function NRST.Vref(tm::HierarchicalModel{TF,TI}, x) where {TF,TI}
     acc -= logpdf(MvNormal(Fill(μ,tm.J), τ²*I), θ)            # θ
     return acc
 end
-function Base.rand(tm::HierarchicalModel{TF,TI}, rng) where {TF,TI}
-    x    = Vector{TF}(undef, tm.lenx)
+function Random.rand!(tm::HierarchicalModel, rng, x)
     τ²   = rand(rng, tm.τ²_prior)
     τ    = sqrt(τ²)
     x[1] = log(τ²)
@@ -48,9 +47,12 @@ function Base.rand(tm::HierarchicalModel{TF,TI}, rng) where {TF,TI}
     end
     return x
 end
+function Base.rand(tm::HierarchicalModel{TF}, rng) where {TF}
+    rand!(tm, rng, Vector{TF}(undef, tm.lenx))
+end
 
 # method for the likelihood potential
-function NRST.V(tm::HierarchicalModel{TF,TI}, x) where {TF,TI}
+function NRST.V(tm::HierarchicalModel{TF}, x) where {TF}
     _, σ², _, θ = invtrans(x)
     Σ   = σ²*I
     acc = zero(TF)

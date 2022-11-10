@@ -4,7 +4,7 @@ using NRST
 using NRSTExp
 using NRSTExp.ExamplesGallery
 
-tm  = TitanicTuring()
+tm  = ChalLogistic()
 rng = SplittableRandom(4)
 ns, TE, Λ = NRSTSampler(
     tm,
@@ -14,8 +14,13 @@ ns, TE, Λ = NRSTSampler(
     γ        = 4.0
 );
 
-
-
+rand()
+using Random
+randn!(rng, zeros(3))
+using Distributions
+rand!(Exponential(), zeros(5))
+randn!
+rand!(rng, HalfCauchy(),zeros(4))
 using Distributions, DynamicPPL
 using NRST
 using NRSTExp

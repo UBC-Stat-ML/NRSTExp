@@ -2,10 +2,11 @@
 struct HalfCauchyEnergy{TF<:AbstractFloat} <: TemperedModel
     HC::HalfCauchy{TF}
 end
-HalfCauchyEnergy(γ::AbstractFloat)   = HalfCauchyEnergy(HalfCauchy(γ))
-NRST.V(::HalfCauchyEnergy, v)        = v[1]
-NRST.Vref(tm::HalfCauchyEnergy, v)   = -logpdf(tm.HC, v[1])
-Base.rand(tm::HalfCauchyEnergy, rng) = [rand(rng, tm.HC)]
+HalfCauchyEnergy(γ::AbstractFloat)         = HalfCauchyEnergy(HalfCauchy(γ))
+NRST.V(::HalfCauchyEnergy, v)              = v[1]
+NRST.Vref(tm::HalfCauchyEnergy, v)         = -logpdf(tm.HC, v[1])
+Random.rand!(tm::HalfCauchyEnergy, rng, v) = rand!(rng, tm.HC, v)
+Base.rand(tm::HalfCauchyEnergy, rng)       = [rand(rng, tm.HC)]
 
 # numerical checks
 # using QuadGK

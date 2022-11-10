@@ -9,12 +9,13 @@ using Lattices: Square, edges
 using LazyArrays
 using LinearAlgebra: I, Diagonal, dot
 using LogExpFunctions: logistic, log1pexp
-using Random: AbstractRNG
+using Random
 using Turing: arraydist, filldist, BernoulliLogit
 using UnPack: @unpack
 using ..NRSTExp: NRSTExp
 import NRST: NRST, TemperedModel, TuringTemperedModel, V, Vref
 import Base: rand
+import Random: rand!
 
 # utils
 include("utils.jl")
