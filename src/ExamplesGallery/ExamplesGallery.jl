@@ -6,10 +6,11 @@ using DynamicPPL
 using FillArrays: Fill
 using IrrationalConstants: twoπ, log2π, logtwo
 using Lattices: Square, edges
+using LazyArrays
 using LinearAlgebra: I, Diagonal, dot
 using LogExpFunctions: logistic, log1pexp
 using Random: AbstractRNG
-using Turing: filldist, BernoulliLogit
+using Turing: arraydist, filldist, BernoulliLogit
 using UnPack: @unpack
 using ..NRSTExp: NRSTExp
 import NRST: NRST, TemperedModel, TuringTemperedModel, V, Vref

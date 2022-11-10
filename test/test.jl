@@ -9,8 +9,8 @@ rng = SplittableRandom(4)
 ns, TE, Λ = NRSTSampler(
     tm,
     rng,
-    use_mean = false,
-    maxcor   = 0.8,
+    use_mean = true,
+    maxcor   = 0.6,
     γ        = 4.0
 );
 
