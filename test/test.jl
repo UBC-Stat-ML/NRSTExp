@@ -4,7 +4,7 @@ using NRST
 using NRSTExp
 using NRSTExp.ExamplesGallery
 
-tm  = HalfCauchyEnergy(1000.0)
+tm  = TitanicTuring()
 rng = SplittableRandom(4)
 ns, TE, Λ = NRSTSampler(
     tm,

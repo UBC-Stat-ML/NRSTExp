@@ -6,9 +6,10 @@ using DynamicPPL
 using FillArrays: Fill
 using IrrationalConstants: twoπ, log2π, logtwo
 using Lattices: Square, edges
-using LinearAlgebra: I
+using LinearAlgebra: I, Diagonal, dot
 using LogExpFunctions: logistic, log1pexp
 using Random: AbstractRNG
+using Turing: filldist, BernoulliLogit
 using UnPack: @unpack
 using ..NRSTExp: NRSTExp
 import NRST: NRST, TemperedModel, TuringTemperedModel, V, Vref
@@ -22,9 +23,11 @@ export HalfCauchy
 include("Turing/hierarchical_model.jl")
 include("Turing/challenger.jl")
 include("Turing/MRNATransfection.jl")
+include("Turing/Titanic.jl")
 export HierarchicalModel, HierarchicalModelTuring
 export ChalLogistic, ChalLogisticTuring
 export MRNATrans, MRNATransTuring
+export TitanicTuring
 
 # Physics
 include("Physics/XY_model.jl")
