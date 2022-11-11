@@ -23,13 +23,13 @@ function benchmark(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
     # BouncyMC: perfect tuning
     tlens, vNs = run_tours!(BouncyMC(Λ/N,N), ntours)
     TE    = TE_est(vNs)
-    nvevs = -1 # technically infty so its not meaningful
+    nvevs = -1 # technically infty so it's not meaningful
     saveres!(df, "DTPerf", tlens, nvevs, TE)
 
     # BouncyMC: actual rejections
     tlens, vNs = run_tours!(BouncyMC(R), ntours)
     TE    = TE_est(vNs)
-    nvevs = -1 # technically infty so its not meaningful
+    nvevs = -1 # technically infty so it's not meaningful
     saveres!(df, "DTAct", tlens, nvevs, TE)
 
     # add other metadata

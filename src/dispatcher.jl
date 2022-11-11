@@ -12,11 +12,15 @@ function dispatch()
     dfres = dispatch(pars)
     
     # write data
+    println("\nNRSTExp: experiment finished successfully.")
+    print("\tWriting metadata...")
     fn = "NRSTExp_$(pars["seed"])_" * Dates.format(Dates.now(), "yyyymmddHHMMSSs")
     open(fn * ".tsv", "w") do io
         writedlm(io, pars)
     end
+    print("done!\n\tWriting data...")
     CSV.write(fn * ".csv.gz", dfres, compress=true) # use gzip compression
+    println("done!\nGood bye!")
     return
 end
 

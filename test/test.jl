@@ -1,4 +1,4 @@
-# JULIA_DEBUG=NRST julia --project -t 4 -e "using NRSTExp; dispatch()" exp=benchmark mod=MRNATrans fun=median cor=0.6 gam=2.0 seed=3990
+# JULIA_DEBUG=NRST julia --project -t 4 -e "using NRSTExp; dispatch()" exp=benchmark mod=MRNATrans fun=mean cor=0.7 gam=5.0 seed=8371
 
 using NRST
 using NRSTExp
