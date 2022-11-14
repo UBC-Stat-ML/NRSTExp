@@ -12,7 +12,7 @@ function dispatch()
     dfres = dispatch(pars)
     
     # write data
-    println("\nNRSTExp: experiment finished successfully.")
+    println("\nNRSTExp: experiment finished successfully!")
     print("\tWriting metadata...")
     fn = "NRSTExp_$(pars["seed"])_" * Dates.format(Dates.now(), "yyyymmddHHMMSSs")
     open(fn * ".tsv", "w") do io

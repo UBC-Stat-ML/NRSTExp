@@ -19,20 +19,21 @@ end
 function hm_load_data()
     readdlm(pkgdir(NRSTExp, "data", "simulated8schools.csv"), ',', Float64)
 end
-function invtrans(x::AbstractVector{<:AbstractFloat})
+function invtrans(::HierarchicalModel{TF}, x::AbstractVector{TF}) where {TF}
     (τ²=exp(x[1]), σ²=exp(x[2]), μ=x[3], θ = @view x[4:end])
 end
 
 # methods for the prior
 function NRST.Vref(tm::HierarchicalModel{TF}, x) where {TF}
-    τ², σ², μ, θ = invtrans(x)
-    acc = zero(TF)
+    τ², σ², μ, θ = invtrans(tm, x)
+    acc  = zero(TF)
     acc -= logpdf(tm.τ²_prior, τ²) # τ²
     acc -= x[1]                                               # logdetjac τ²
     acc -= logpdf(tm.σ²_prior, σ²) # σ²
     acc -= x[2]                                               # logdetjac σ²
     acc -= logpdf(Cauchy(), μ)                                # μ
-    acc -= logpdf(MvNormal(Fill(μ,tm.J), τ²*I), θ)            # θ
+    # acc -= logpdf(MvNormal(Fill(μ,tm.J), τ²*I), θ)            # θ
+    acc += 0.5(tm.J * (log2π+log(τ²)) + sum(θᵢ -> abs2(θᵢ - μ), θ)/τ²)
     return acc
 end
 function Random.rand!(tm::HierarchicalModel, rng, x)
@@ -53,12 +54,13 @@ end
 
 # method for the likelihood potential
 function NRST.V(tm::HierarchicalModel{TF}, x) where {TF}
-    _, σ², _, θ = invtrans(x)
-    Σ   = σ²*I
+    _, σ², _, θ = invtrans(tm, x)
     acc = zero(TF)
     for (j, y) in enumerate(eachcol(tm.Y))
-        acc -= logpdf(MvNormal(Fill(θ[j], tm.N), Σ), y)
+        # acc -= logpdf(MvNormal(Fill(θ[j], tm.N), Σ), y)
+        acc += 0.5sum(yᵢ -> abs2(yᵢ - θ[j]), y)/σ²
     end
+    acc += 0.5 * tm.J * tm.N * (log2π+log(σ²))
     return acc
 end
 
