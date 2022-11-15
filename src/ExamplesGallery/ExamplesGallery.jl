@@ -29,7 +29,7 @@ include("Turing/Titanic.jl")
 export HierarchicalModel, HierarchicalModelTuring
 export ChalLogistic, ChalLogisticTuring
 export MRNATrans, MRNATransTuring
-export TitanicTuring
+export TitanicHS, TitanicHSTuring
 
 # Physics
 include("Physics/XY_model.jl")
