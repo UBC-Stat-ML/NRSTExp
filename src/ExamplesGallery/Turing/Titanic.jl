@@ -1,6 +1,8 @@
 #######################################
 # pure julia version
+# TODO: use mul!(tm.Xβ, X, β) with pre-allocated vector Xβ -> zero alloc V evals!
 #######################################
+
 # Define a `TemperedModel` type and implement `NRST.V`, `NRST.Vref`, and `Base.rand` 
 struct TitanicHS{TF<:AbstractFloat, TI<:Int} <: TemperedModel
     X::Matrix{TF}
@@ -55,7 +57,7 @@ end
 # method for the likelihood potential
 function NRST.V(tm::TitanicHS{TF}, x) where {TF}
     _, α, _, β = invtrans(tm, x)
-    Xβ  = tm.X * β
+    Xβ  = tm.X * β               # TODO: use mul!(tm.Xβ, X, β) with pre-allocated vector Xβ -> zero alloc V evals! 
     acc = zero(TF)
     for (i, yᵢ) in enumerate(tm.y)
         ℓ    = α + Xβ[i]
