@@ -13,9 +13,9 @@ end
 ChalLogistic() = ChalLogistic(10., 100., chal_load_data()..., MvNormal(2, 10.))
 
 function chal_load_data()
-    dta = readdlm(pkgdir(NRSTExp, "data", "challenger.csv"), ',')
-    ys  = dta[2:end,1] .> 0
-    xs  = Float64.(dta[2:end,2])
+    dta = readdlm(pkgdir(NRSTExp, "data", "challenger.csv"), ',', skipstart=1)
+    ys  = dta[:,1] .> 0
+    xs  = dta[:,2]
     return (xs,ys)
 end
 
@@ -36,7 +36,7 @@ function NRST.V(tm::ChalLogistic{TF}, β) where {TF}
     β₀ = β[1]; β₁ = β[2]
     vacc = zero(TF)
     for (i,y) in enumerate(tm.ys)
-        xβ    = β₀ + β₁*tm.xs[i]
+        @inbounds xβ = β₀ + β₁*tm.xs[i]
         vacc += y ? log1pexp(-xβ) : log1pexp(xβ)
     end
     return vacc

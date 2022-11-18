@@ -7,7 +7,7 @@ using FillArrays: Fill
 using IrrationalConstants: twoπ, log2π, logtwo
 using Lattices: Square, edges
 using LazyArrays
-using LinearAlgebra: I, Diagonal, dot
+using LinearAlgebra: I, Diagonal, dot, mul!
 using LogExpFunctions: logistic, log1pexp
 using Random
 using Turing: arraydist, filldist, BernoulliLogit

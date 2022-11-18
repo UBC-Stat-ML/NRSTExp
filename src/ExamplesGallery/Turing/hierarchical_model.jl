@@ -17,7 +17,7 @@ function HierarchicalModel()
     HierarchicalModel(InverseGamma(.1,.1), InverseGamma(.1,.1), Y, size(Y)..., 11)
 end
 function hm_load_data()
-    readdlm(pkgdir(NRSTExp, "data", "simulated8schools.csv"), ',', Float64)
+    readdlm(pkgdir(NRSTExp, "data", "simulated8schools.csv"), ',')
 end
 function invtrans(::HierarchicalModel{TF}, x::AbstractVector{TF}) where {TF}
     (τ²=exp(x[1]), σ²=exp(x[2]), μ=x[3], θ = @view x[4:end])

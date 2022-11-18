@@ -1,12 +1,12 @@
 #######################################
 # pure julia version
-# TODO: use mul!(tm.Xβ, X, β) with pre-allocated vector Xβ -> zero alloc V evals!
 #######################################
 
 # Define a `TemperedModel` type and implement `NRST.V`, `NRST.Vref`, and `Base.rand` 
 struct TitanicHS{TF<:AbstractFloat, TI<:Int} <: TemperedModel
     X::Matrix{TF}
     y::BitVector
+    Xβ::Vector{TF}
     n::TI
     p::TI
     lenx::TI
@@ -16,8 +16,15 @@ end
 function TitanicHS()
     X, y = titanic_load_data()
     n, p = size(X)
-    TitanicHS(X, y, n, p, 2 + 2p, HalfCauchy(), TDist(3))
+    TitanicHS(X, y, similar(X,n), n, p, 2 + 2p, HalfCauchy(), TDist(3))
 end
+
+# copy method. keeps everything common except temp storage Xβ. this is needed
+# in order to avoid race conditions when sampling in parallel
+function Base.copy(tm::TitanicHS)
+    TitanicHS(tm.X, tm.y, similar(tm.X, tm.n), tm.n, tm.p, tm.lenx, tm.H, tm.T)
+end
+
 function invtrans(tm::TitanicHS{TF}, x::AbstractVector{TF}) where {TF}
     p = tm.p
     ( τ = x[1], α = x[2], λ = view(x, 3:(p+2)), β = view(x, (p+3):tm.lenx) )
@@ -27,14 +34,11 @@ end
 function NRST.Vref(tm::TitanicHS{TF}, x) where {TF}
     τ, α, λ, β = invtrans(tm, x)
     acc  = zero(TF)
-    acc -= logpdf(tm.H, τ)
-    isinf(acc) && return acc
-    acc -= logpdf(tm.T, α)
+    isinf(acc -= logpdf(tm.H, τ)) && return acc
+    isinf(acc -= logpdf(tm.T, α)) && return acc
     for (i, λᵢ) in enumerate(λ)
-        lp   = logpdf(tm.H, λᵢ)
-        isinf(lp) && return lp
-        acc -= lp
-        acc -= logpdf(Normal(zero(TF), λᵢ*τ), β[i])
+        isinf(acc -= logpdf(tm.H, λᵢ)) && return acc
+        isinf(acc -= logpdf(Normal(zero(TF), λᵢ*τ), β[i])) && return acc
     end
     return acc
 end
@@ -57,10 +61,10 @@ end
 # method for the likelihood potential
 function NRST.V(tm::TitanicHS{TF}, x) where {TF}
     _, α, _, β = invtrans(tm, x)
-    Xβ  = tm.X * β               # TODO: use mul!(tm.Xβ, X, β) with pre-allocated vector Xβ -> zero alloc V evals! 
+    mul!(tm.Xβ, tm.X, β)
     acc = zero(TF)
     for (i, yᵢ) in enumerate(tm.y)
-        ℓ    = α + Xβ[i]
+        @inbounds ℓ = α + tm.Xβ[i]             # 2.5 times faster with @inbounds
         acc += yᵢ ? log1pexp(-ℓ) : log1pexp(ℓ)
     end
     return acc
