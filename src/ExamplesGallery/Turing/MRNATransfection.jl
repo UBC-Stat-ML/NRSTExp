@@ -20,9 +20,9 @@ function MRNATrans()
 end
 
 function mrna_trans_load_data()
-    dta = readdlm(pkgdir(NRSTExp, "data", "transfection.csv"), ',')
-    ts  = Float64.(dta[2:end,1])
-    ys  = Float64.(dta[2:end,3])
+    dta = readdlm(pkgdir(NRSTExp, "data", "transfection.csv"), ',', skipstart=1)
+    ts  = dta[:,1]
+    ys  = dta[:,3]
     return ts, ys
 end
 
@@ -58,16 +58,22 @@ function NRST.V(tm::MRNATrans{TF}, x) where {TF}
     β   = 10^x[3]
     δ   = 10^x[4]
     σ   = 10^x[5]
-    δmβ = δ - β
+    κ   = (km₀ /(δ - β))
     acc = zero(TF)
     for (n, t) in enumerate(tm.ts)
         tmt₀ = t - t₀
-        μ    = (km₀ / δmβ) * (-expm1(-δmβ * tmt₀)) * exp(-β*tmt₀)
-        isfinite(μ) || (μ = TF(1e4))
-        acc -= logpdf(Normal(μ, σ), tm.ys[n])
+        @inbounds y = tm.ys[n]
+        μ = κ * expamexpb(-β*tmt₀, -δ*tmt₀)
+        isnan(μ) && error("μ=$μ => t₀=$t₀, km₀=$km₀, β=$β, δ=$δ, -β*tmt₀=$(-β*tmt₀), -δ*tmt₀=$(-δ*tmt₀), x=$x")
+        isinf(acc -= logpdf(Normal(μ, σ), y)) && break
     end
     return acc
 end
+
+# exp(a) - exp(b) = exp(max(a,b))[exp(a-max(a,b)) - exp(b-max(a,b))]
+# = 1{a>b}{exp(a)[1 - exp(b-a)]} + 1{a<=b}{exp(b)[exp(a-b) - 1]}
+# = 1{a>b}{-exp(a)expm1(b-a)} + 1{a<=b}{exp(b)expm1(a-b)}
+expamexpb(a,b) = a>b ? -exp(a)*expm1(b-a) : exp(b)*expm1(a-b)
 
 #######################################
 # turing version
