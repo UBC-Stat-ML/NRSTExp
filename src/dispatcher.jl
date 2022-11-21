@@ -14,7 +14,7 @@ function dispatch()
     # write data
     println("\nNRSTExp: experiment finished successfully!")
     print("\tWriting metadata...")
-    fn = "NRSTExp_$(pars["seed"])_" * Dates.format(Dates.now(), "yyyymmddHHMMSSs")
+    fn = "NRSTExp_" * string(hash(join(ARGS)), base = 16)
     open(fn * ".tsv", "w") do io
         writedlm(io, pars)
     end

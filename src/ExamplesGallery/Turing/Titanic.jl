@@ -65,7 +65,7 @@ function NRST.V(tm::TitanicHS{TF}, x) where {TF}
     acc = zero(TF)
     for (i, yᵢ) in enumerate(tm.y)
         @inbounds ℓ = α + tm.Xβ[i]             # 2.5 times faster with @inbounds
-        acc += yᵢ ? log1pexp(-ℓ) : log1pexp(ℓ)
+        acc += yᵢ ? log1pexp(-ℓ) : log1pexp(ℓ) # log1pexp is never Inf if ℓ isn't, so no need for a check here
     end
     return acc
 end
