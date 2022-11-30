@@ -11,6 +11,8 @@ using SplittableRandoms: SplittableRandom
 export dispatch
 
 include("dispatcher.jl")
+include("utils.jl")
+include("hyperparams.jl")
 include("benchmark.jl")
 
 # sub-modules
@@ -19,5 +21,8 @@ using .IdealIndexProcesses
 
 include("ExamplesGallery/ExamplesGallery.jl")
 using .ExamplesGallery
+
+# include("CompetingSamplers/CompetingSamplers.jl")
+# using .CompetingSamplers
 
 end # module
