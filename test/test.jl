@@ -12,9 +12,18 @@ ns, TE, Λ = NRSTSampler(
 
 using NRSTExp.CompetingSamplers
 
-gt = GT95Sampler(ns);
+gt = FBDRSampler(ns);
 ntours = NRST.min_ntours_TE(TE);
 res = parallel_run(gt,rng,ntours);
 last(res.toureff)
 
 NRST.get_trace(gt).trXplAP
+
+# julia --project -t 4 \
+#     -e "using NRSTExp; dispatch()" \
+#     exp=benchmark  \
+#     mod=Challenger  \
+#     fun=mean    \
+#     cor=0.9 \
+#     gam=8.0  \
+#     seed=1111

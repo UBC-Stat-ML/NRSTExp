@@ -58,6 +58,8 @@ function dispatch(pars::Dict)
         tm = ChalLogistic()
     elseif model == "MRNATrans"
         tm = MRNATrans()
+    elseif model == "Titanic"
+        tm = TitanicHS()
     else
         throw(ArgumentError("Model $model not yet implemented."))
     end
