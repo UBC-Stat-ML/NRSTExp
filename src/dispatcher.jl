@@ -50,8 +50,10 @@ function dispatch(pars::Dict)
 	    copyto!(ns.np.c, free_energy(tm, ns.np.betas)) # use exact free energy
 	    need_build = false
 	end
-    elseif model == "XYModel"
+    elseif model == "XYModel_small"
         tm = XYModel(5)
+    elseif model == "XYModel_big"
+        tm = XYModel(8)
     elseif model == "HierarchicalModel"
         tm = HierarchicalModel()
     elseif model == "Challenger"
