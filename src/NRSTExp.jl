@@ -22,7 +22,7 @@ using .IdealIndexProcesses
 include("ExamplesGallery/ExamplesGallery.jl")
 using .ExamplesGallery
 
-# include("CompetingSamplers/CompetingSamplers.jl")
-# using .CompetingSamplers
+include("CompetingSamplers/CompetingSamplers.jl")
+using .CompetingSamplers
 
 end # module
