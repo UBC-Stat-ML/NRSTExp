@@ -23,8 +23,8 @@ function sample_logprob(rng::AbstractRNG, lps::AbstractVector)
         m += 1
         @inbounds clp = logaddexp(clp, lps[m])
     end
-    if clp > 10eps(clp)
-        throw(ArgumentError("sample_logprob: excessive mass since logsumexp(lps) = $clp > 0."))
+    if clp > 100eps(clp)
+        throw(ArgumentError("sample_logprob: excessive mass in lps: logsumexp(lps) = $clp > 0."))
     elseif clp < nE
         return -1
     else
