@@ -65,17 +65,18 @@ end
 
 # full tempering step
 function NRST.comm_step!(fbdr::FBDRSampler{T,I,K}, rng::AbstractRNG) where {T,I,K}
-    @unpack ms,ip,np = fbdr                          # attempt to move i
+    @unpack ms,ip,np = fbdr
+    zK = zero(K)                                     # attempt to move i
     update_ms!(fbdr)                                 # update IMGS probabilities
     idxp = sample_logprob(rng, ms)                   # sample a new idxp = iprop + 1 (1-based index)
-    lpff = log1mexp(logsumexp(ms))                   # logprob of failing to sample from {j: (j-i)eps>0}: log(1-sum(M_{i,j})) = log(1-exp(logsumexp(m))) = log1mexp(logsumexp(m))
+    lpff = log1mexp(min(zK, logsumexp(ms)))          # logprob of failing to sample from {j: (j-i)eps>0}: log(1-sum(M_{i,j})) = log(1-exp(logsumexp(m))) = log1mexp(logsumexp(m)). also, need to trunc to avoid issues with numerical noise
     if idxp > zero(I)
         ip[1] = idxp - one(I)                        # correct for 1-based index
     else                                             # failed to sample from {j: (j-i)eps>0} => need to sample from 2 options: {flip, stay}
         ip[2] *= -one(I)                             # simulate flip
         update_ms!(fbdr)                             # recompute IMGS probabilities
-        lpfb   = log1mexp(logsumexp(ms))             # logprob of failing to sample from {j: (j-i)eps'>0} with the flipped eps'=-eps
-        lpflip = log1mexp(min(zero(K), lpfb-lpff))   # log-probability of flip = log(Lambda) - lpff but more accurate (see below)
+        lpfb   = log1mexp(min(zK, logsumexp(ms)))    # logprob of failing to sample from {j: (j-i)eps'>0} with the flipped eps'=-eps. also, need to trunc to avoid issues with numerical noise
+        lpflip = log1mexp(min(zK, lpfb-lpff))        # log-probability of flip = log(Lambda) - lpff but more accurate (see below)
         randexp(rng) < -lpflip && (ip[2] *= -one(I)) # flip failed => need to undo ϵ flip   
     end
     return exp(lpff)                                 # return prob of failing to sample {j: (j-i)eps>0}
