@@ -11,7 +11,7 @@ struct FBDRSampler{T,I<:Int,K<:AbstractFloat,TXp<:NRST.ExplorationKernel,TProb<:
     ip::MVector{2,I}       # current state of the Index Process (i,eps). uses statically sized but mutable vector
     curV::Base.RefValue{K} # current energy V(x) (stored as ref to make it mutable)
     gs::Vector{K}          # storage for the log of the conditional beta|x, length N+1
-    ms::Vector{K}          # storage for the log of the Metropolized Gibbs conditionals, length N+1
+    ms::Vector{K}          # storage for the log of the Irreversible Metropolized Gibbs conditionals, length N+1 (eq 31, formula for j neq i)
 end
 
 # constructor: copy key fields of an existing (usually pre-tuned) NRSTSampler
@@ -43,25 +43,14 @@ function update_gs!(fbdr::FBDRSampler{T,I,K}) where {T,I,K}
     gs .-= logsumexp(gs)
 end
 
-# update the log of the irreversible Metropolized Gibbs (IMGS) conditional of beta
-# the Irreversible Metropolized conditional is (Eq 31)
-#     M_{i,j}^{eps} =
-#     {
-#      M_{i,j},                 (j-i)eps>0
-#      0,                       (j-i)eps<0
-#      1-sum_{j neq i} M_{i,j}, j==i        
+# update the log of the IMGS conditional of beta for j neq i
+# This is Eq 31, case j neq i
+#     M_{i,j}^{eps} = 1{(j-i)eps>0} M_{i,j}
 # with M_{i,j} the (standard) Metropolized Gibbs (Eq 15)
 #     M_{i,j} = G_j min{1/(1-G_i), 1/(1-G_j)}, j neq i
-# so
-#     m_j := log(M_{i,j}^{eps}) =
-#     {
-#      log(M_{i,j}),                 (j-i)eps>0
-#      -Inf,                         (j-i)eps<0
-#      log(1-sum_{j neq i} M_{i,j}), j==i      
 # Furthermore  
-#     m_j = g_j - max{log1mexp(g_i),log1mexp(g_j)}, (j-i)eps>0
-#     m_i = log(1-sum(M_{i,j})) = log(1-exp(logsumexp(m))) = log1mexp(logsumexp(m))
-# note: it holds that sum(exp, ms) === one(eltype(ms))
+#     m_j := log(M_{i,j}) = g_j - max{log1mexp(g_i),log1mexp(g_j)}, (j-i)eps>0
+# Note: since the vector ms has missing mass, it holds that sum(exp, ms)<1.
 function update_ms!(fbdr::FBDRSampler{T,I,K}) where {T,I,K}
     update_gs!(fbdr)
     @unpack gs,ms,ip = fbdr
@@ -70,36 +59,61 @@ function update_ms!(fbdr::FBDRSampler{T,I,K}) where {T,I,K}
     ϵ   = last(ip)
     log1mexpgi = log1mexp(gs[idx])
     for (jdx,g) in enumerate(gs)
-        # for j=i we also put -Inf so that it contributes 0 to the logsumexp below
         @inbounds ms[jdx] = sign(jdx-idx)!=sign(ϵ) ? K(-Inf) : g - max(log1mexp(g), log1mexpgi)
     end
-    ms[idx] = log1mexp(min(zero(K), logsumexp(ms))) # truncation is needed to handle numerical errors
 end
 
 # full tempering step
 function NRST.comm_step!(fbdr::FBDRSampler{T,I,K}, rng::AbstractRNG) where {T,I,K}
-    @unpack ms,ip,np = fbdr
-    i = first(ip)                                         # attempt to move i
-    update_ms!(fbdr)                                      # update IMGS probabilities
-    iprop   = sample_logprob(rng, ms) - one(I)            # sample a new i (1-based index)
-    lpstayf = ms[i+1]                                     # log-probability of iprop==i
-    if iprop != i
-        ip[1] = iprop 
-    else                                                  # got same i, so need to attempt flip
-        ip[2]  *= -one(I)                                 # simulate flip
-        update_ms!(fbdr)                                  # recompute IMGS probabilities
-        lpstayb = ms[i+1]                                 # log-probability of iprop==i with flip
-        lpflip  = log1mexp(min(zero(K), lpstayb-lpstayf)) # log-probability of flip
-        randexp(rng) < -lpflip && (ip[2] *= -one(I))      # flip failed => need to undo ϵ flip   
+    @unpack ms,ip,np = fbdr                          # attempt to move i
+    update_ms!(fbdr)                                 # update IMGS probabilities
+    idxp = sample_logprob(rng, ms)                   # sample a new idxp = iprop + 1 (1-based index)
+    lpff = log1mexp(logsumexp(m))                    # logprob of failing to sample from {j: (j-i)eps>0}: log(1-sum(M_{i,j})) = log(1-exp(logsumexp(m))) = log1mexp(logsumexp(m))
+    if idxp > zero(I)
+        ip[1] = idxp - one(I)                        # correct for 1-based index
+    else                                             # failed to sample from {j: (j-i)eps>0} => need to sample from 2 options: {flip, stay}
+        ip[2] *= -one(I)                             # simulate flip
+        update_ms!(fbdr)                             # recompute IMGS probabilities
+        lpfb   = log1mexp(logsumexp(m))              # logprob of failing to sample from {j: (j-i)eps'>0} with the flipped eps'=-eps
+        lpflip = log1mexp(min(zero(K), lpfb-lpff))   # log-probability of flip = log(Lambda) - lpff but more accurate (see below)
+        randexp(rng) < -lpflip && (ip[2] *= -one(I)) # flip failed => need to undo ϵ flip   
     end
-    return exp(lpstayf)                                   # lpstayf == logprob of rejecting an i move
+    return exp(lpff)                                 # return prob of failing to sample {j: (j-i)eps>0}
 end
 
+# note on the expression for lpflip. The prob of flip is
+# pflip = Lambda / 1 - sum_{l neq k} M_{k,l}^{eps}
+# Let
+# pfail_k^{eps} := 1 - sum_{l neq k} M_{k,l}^{eps}
+# this is the prob of either flipping or not chaning anything; i.e.,
+# pfail_k^{eps} = Lambda_k^{eps} + M_{k,k}^{eps}
+# (btw this shows more precisely why 2nd line in 31 is wrong)
+# Then
+# Lambda_k^{eps} = max{0,  1-pfail_k^{-eps}-  1+pfail_k^{eps}}
+# = max{0,  pfail_k^{eps} - pfail_k^{-eps}}
+# Then, the prob of accepting the flip is
+# Lambda_k^{eps} / pfail_k^{eps}
+# = (1/pfail_k^{eps})max{0,  pfail_k^{eps} - pfail_k^{-eps}}
+# = max{0, 1 - pfail_k^{-eps}/pfail_k^{eps}}
+# and moreover, if 
+# lpf_k^{eps} := log(pfail_k^{eps})
+# Then
+# 1 - pfail_k^{-eps}/pfail_k^{eps}
+# = 1 - exp[lpf_k^{-eps}  - lpf_k^{eps} ]
+# = - (exp[lpf_k^{-eps}  - lpf_k^{eps} ])
+# = - expm1[lpf_k^{-eps}  - lpf_k^{eps} ] 
+# Furthermore, since expm1 is increasing and expm1(0)=0 
+# max{0, -expm1(a)} = -[min{expm1(0), expm1(a)}]
+# = -expm1(min{0, a})
+# Finally
+# Lambda_k^{eps} / pfail_k^{eps}
+# = -expm1(min{0, lpf_k^{-eps}  - lpf_k^{eps}  })
+# Even better: keep log scale by using
+# log(Lambda_k^{eps} / pfail_k^{eps})
+# = log[1 - exp(min{0, lpf_k^{-eps}  - lpf_k^{eps}  }) ]
+# = log1mexp(min{0, lpf_k^{-eps}  - lpf_k^{eps}  })
+
 # same step! method as NRST
-# note: the following should always return true
-# NRST.step!(fbdr, rng)
-# NRST.CompetingSamplers.update_ms!(fbdr)
-# first(ip) == (last(ip) > 0 ? findfirst(isfinite,ms) : findlast(isfinite,ms))-1
 
 #######################################
 # RegenerativeSampler interface

@@ -8,10 +8,12 @@
 # Hence, we can sample from lps via
 #     E ~ Exp(1)
 #     n(E) = min{n in 1:m : logsumexp(ps[1:n]) >= -E }
-# Finally, use recursive computation of cumulative logsumexp
+# Note: can use recursive computation of cumulative logsumexp
 #     clp_n = logsumexp(lps[1:n]) = log(exp(lps[n]) + sum_{j=1}^{n-1} exp(lps[j]) )
 #           = log(exp(lps[n]) + exp(clp_{n-1}))
 #           = logaddexp(clp_{n-1}, lps[n])
+# Finally: sum(exp,lps) < 1 is allowed by having a default return value -1,
+# which represents that the missing mass was selected.
 function sample_logprob(rng::AbstractRNG, lps::AbstractVector)
     nE  = -randexp(rng)
     M   = length(lps)
@@ -21,5 +23,5 @@ function sample_logprob(rng::AbstractRNG, lps::AbstractVector)
         m += 1
         @inbounds clp = logaddexp(clp, lps[m])
     end
-    return m
+    return (clp < nE ? -1 : m)
 end
