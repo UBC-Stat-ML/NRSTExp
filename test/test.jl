@@ -12,13 +12,12 @@ ns, TE, Λ = NRSTSampler(
 
 
 using NRSTExp.CompetingSamplers
+using Plots
 
-gt = FBDRSampler(ns);
-ntours = NRST.min_ntours_TE(TE);
-res = parallel_run(gt,rng,ntours);
-last(res.toureff)
-
-NRST.get_trace(gt).trXplAP
+fbdr = FBDRSampler(ns);
+NRST.tour!(fbdr,rng)
+ntours = 2048# NRST.min_ntours_TE(TE);
+res = parallel_run(fbdr,rng,ntours);
 
 ###############################################################################
 # example system call

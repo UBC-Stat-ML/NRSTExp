@@ -36,7 +36,7 @@ end
 #     G_i = exp(-b_iV + c_i)/ sum_j exp(-b_jV + c_j)
 #     g_i := log(G_i) = -b_iV + c_i - logsumexp(-bV + c)
 # note: it holds that sum(exp, gs) === one(eltype(gs))
-function update_gs!(fbdr::FBDRSampler{T,I,K}) where {T,I,K}
+function update_gs!(fbdr::FBDRSampler)
     @unpack gs,np,curV = fbdr
     @unpack betas,c = np
     gs  .= -betas .* curV[] .+ c
@@ -46,11 +46,11 @@ end
 # update the log of the IMGS conditional of beta for j neq i
 # This is Eq 31, case j neq i
 #     M_{i,j}^{eps} = 1{(j-i)eps>0} M_{i,j}
-# with M_{i,j} the (standard) Metropolized Gibbs (Eq 15)
-#     M_{i,j} = G_j min{1/(1-G_i), 1/(1-G_j)}, j neq i
-# Furthermore  
+# with M_{i,j} the (standard) Metropolized Gibbs (Eq 15, j neq i)
+#     M_{i,j} = G_j min{1/(1-G_i), 1/(1-G_j)} = G_j/max{1-G_i, 1-G_j}
+# Furthermore, since log is increasing,
 #     m_j := log(M_{i,j}) = g_j - max{log1mexp(g_i),log1mexp(g_j)}, (j-i)eps>0
-# Note: since the vector ms has missing mass, it holds that sum(exp, ms)<1.
+# Note: ms has missing mass, so sum(exp, ms)<1.
 function update_ms!(fbdr::FBDRSampler{T,I,K}) where {T,I,K}
     update_gs!(fbdr)
     @unpack gs,ms,ip = fbdr
@@ -68,13 +68,13 @@ function NRST.comm_step!(fbdr::FBDRSampler{T,I,K}, rng::AbstractRNG) where {T,I,
     @unpack ms,ip,np = fbdr                          # attempt to move i
     update_ms!(fbdr)                                 # update IMGS probabilities
     idxp = sample_logprob(rng, ms)                   # sample a new idxp = iprop + 1 (1-based index)
-    lpff = log1mexp(logsumexp(m))                    # logprob of failing to sample from {j: (j-i)eps>0}: log(1-sum(M_{i,j})) = log(1-exp(logsumexp(m))) = log1mexp(logsumexp(m))
+    lpff = log1mexp(logsumexp(ms))                   # logprob of failing to sample from {j: (j-i)eps>0}: log(1-sum(M_{i,j})) = log(1-exp(logsumexp(m))) = log1mexp(logsumexp(m))
     if idxp > zero(I)
         ip[1] = idxp - one(I)                        # correct for 1-based index
     else                                             # failed to sample from {j: (j-i)eps>0} => need to sample from 2 options: {flip, stay}
         ip[2] *= -one(I)                             # simulate flip
         update_ms!(fbdr)                             # recompute IMGS probabilities
-        lpfb   = log1mexp(logsumexp(m))              # logprob of failing to sample from {j: (j-i)eps'>0} with the flipped eps'=-eps
+        lpfb   = log1mexp(logsumexp(ms))             # logprob of failing to sample from {j: (j-i)eps'>0} with the flipped eps'=-eps
         lpflip = log1mexp(min(zero(K), lpfb-lpff))   # log-probability of flip = log(Lambda) - lpff but more accurate (see below)
         randexp(rng) < -lpflip && (ip[2] *= -one(I)) # flip failed => need to undo ϵ flip   
     end
@@ -114,6 +114,9 @@ end
 # = log1mexp(min{0, lpf_k^{-eps}  - lpf_k^{eps}  })
 
 # same step! method as NRST
+# Note: this must return true
+# update_ms!(fbdr)
+# (last(fbdr.ip) > 0 ? findlast(isinf,fbdr.ms)-1 : findlast(isfinite,fbdr.ms)) == first(fbdr.ip)
 
 #######################################
 # RegenerativeSampler interface
