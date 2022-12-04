@@ -14,7 +14,7 @@
 #           = logaddexp(clp_{n-1}, lps[n])
 # Finally: sum(exp,lps) < 1 is allowed by having a default return value -1,
 # which represents that the missing mass was selected.
-function sample_logprob(rng::AbstractRNG, lps::AbstractVector)
+function sample_logprob(rng::AbstractRNG, lps::Vector{TF}) where {TF<:AbstractFloat}
     nE  = -randexp(rng)
     M   = length(lps)
     m   = 1
@@ -23,8 +23,9 @@ function sample_logprob(rng::AbstractRNG, lps::AbstractVector)
         m += 1
         @inbounds clp = logaddexp(clp, lps[m])
     end
-    if clp > 100eps(clp)
-        throw(ArgumentError("sample_logprob: excessive mass in lps: logsumexp(lps) = $clp > 0."))
+    if clp > 100eps(TF)
+        throw(ArgumentError("sample_logprob: excessive mass in lps: logsumexp" *
+                            "(lps) = $clp > tol=$(100eps(TF))."))
     elseif clp < nE
         return -1
     else
