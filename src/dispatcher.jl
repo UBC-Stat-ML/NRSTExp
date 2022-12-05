@@ -30,6 +30,7 @@ function dispatch(pars::Dict)
     maxcor  = parse(Float64, pars["cor"])
     γ       = parse(Float64, pars["gam"])
     usemean = (pars["fun"] == "mean")
+    xplsmth = parse(Bool, pars["xps"])
     rseed   = parse(Int, pars["seed"])
     rng     = SplittableRandom(rseed)
 
@@ -38,18 +39,19 @@ function dispatch(pars::Dict)
     if model == "MvNormal"
         tm = MvNormalTM(32,4.,2.)
         if usemean
-	    # do special tuning with exact free_energy
-	    ns, TE, Λ = NRSTSampler(
-	        tm,
-	        rng,
-	        use_mean   = usemean,
-	        maxcor     = maxcor,
-	        γ          = γ,
-	        do_stage_2 = false
-	    )
-	    copyto!(ns.np.c, free_energy(tm, ns.np.betas)) # use exact free energy
-	    need_build = false
-	end
+            # do special tuning with exact free_energy
+            ns, TE, Λ = NRSTSampler(
+                tm,
+                rng,
+                use_mean   = usemean,
+                maxcor     = maxcor,
+                γ          = γ,
+                xpl_smooth = xplsmth,
+                do_stage_2 = false
+            )
+	        copyto!(ns.np.c, free_energy(tm, ns.np.betas)) # use exact free energy
+	        need_build = false
+        end
     elseif model == "XYModel_small"
         tm = XYModel(5)
     elseif model == "XYModel_big"
@@ -71,9 +73,10 @@ function dispatch(pars::Dict)
         ns, TE, Λ = NRSTSampler(
             tm,
             rng,
-            use_mean = usemean,
-            maxcor   = maxcor,
-            γ        = γ
+            use_mean   = usemean,
+            maxcor     = maxcor,
+            γ          = γ,
+            xpl_smooth = xplsmth
         )
     end
 

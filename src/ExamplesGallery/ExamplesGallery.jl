@@ -10,7 +10,7 @@ using LazyArrays
 using LinearAlgebra: I, Diagonal, dot, mul!
 using LogExpFunctions: logistic, log1pexp
 using Random
-using Turing: arraydist, filldist, BernoulliLogit
+# using Turing: arraydist, filldist, BernoulliLogit
 using UnPack: @unpack
 using ..NRSTExp: NRSTExp
 import NRST: NRST, TemperedModel, TuringTemperedModel, V, Vref

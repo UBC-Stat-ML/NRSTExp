@@ -18,31 +18,6 @@ function benchmark(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
     Λ = sum(NRST.averej(R))
     ntours = NRST.get_ntours(res)
 
-    # CompetingSamplers
-    # GT95
-    gt    = GT95Sampler(ns)
-    res   = parallel_run(gt, rng, ntours, keep_xs=false);
-    tlens = tourlengths(res)
-    nvevs = map(tr -> get_nvevals(tr,ns.np.nexpls), res.trvec)
-    TE    = last(res.toureff)
-    saveres!(df, "GT95", tlens, nvevs, TE)
-
-    # SH16
-    sh    = SH16Sampler(ns)
-    res   = parallel_run(sh, rng, ntours, keep_xs=false);
-    tlens = tourlengths(res)
-    nvevs = map(tr -> get_nvevals(tr,ns.np.nexpls), res.trvec)
-    TE    = last(res.toureff)
-    saveres!(df, "SH16", tlens, nvevs, TE)
-
-    # FBDR
-    fbdr  = FBDRSampler(ns)
-    res   = parallel_run(fbdr, rng, ntours, keep_xs=false);
-    tlens = tourlengths(res)
-    nvevs = map(tr -> get_nvevals(tr,ns.np.nexpls), res.trvec)
-    TE    = last(res.toureff)
-    saveres!(df, "FBDR", tlens, nvevs, TE)
-
     # IdealIndexProcesses
     # BouncyMC: perfect tuning
     tlens, vNs = run_tours!(BouncyMC(Λ/N,N), ntours)
@@ -55,6 +30,35 @@ function benchmark(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
     TE    = TE_est(vNs)
     nvevs = -1 # technically infty so it's not meaningful
     saveres!(df, "DTAct", tlens, nvevs, TE)
+
+    # TODO: 1) expand TE method for parallel_run for all ST samplers, and then 
+    #       2) use these here where TE is estimated for each CompetingSampler with a prelminary run
+
+    # CompetingSamplers
+    ## Simulated Tempering
+    ### GT95
+    gt    = GT95Sampler(ns)
+    res   = parallel_run(gt, rng, ntours, keep_xs=false);
+    tlens = tourlengths(res)
+    nvevs = map(tr -> get_nvevals(tr,ns.np.nexpls), res.trvec)
+    TE    = last(res.toureff)
+    saveres!(df, "GT95", tlens, nvevs, TE)
+
+    ### SH16
+    sh    = SH16Sampler(ns)
+    res   = parallel_run(sh, rng, ntours, keep_xs=false);
+    tlens = tourlengths(res)
+    nvevs = map(tr -> get_nvevals(tr,ns.np.nexpls), res.trvec)
+    TE    = last(res.toureff)
+    saveres!(df, "SH16", tlens, nvevs, TE)
+
+    ### FBDR
+    fbdr  = FBDRSampler(ns)
+    res   = parallel_run(fbdr, rng, ntours, keep_xs=false);
+    tlens = tourlengths(res)
+    nvevs = map(tr -> get_nvevals(tr,ns.np.nexpls), res.trvec)
+    TE    = last(res.toureff)
+    saveres!(df, "FBDR", tlens, nvevs, TE)
 
     # add other metadata
     insertcols!(df, :N => N)

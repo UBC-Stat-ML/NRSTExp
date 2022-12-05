@@ -25,11 +25,12 @@ res = parallel_run(fbdr,rng,ntours);
 
 # julia --project -t 4 \
 #     -e "using NRSTExp; dispatch()" \
-#     exp=benchmark  \
+#     exp=hyperparams  \
 #     mod=Challenger  \
 #     fun=mean    \
 #     cor=0.9 \
 #     gam=8.0  \
+#     xps=true \
 #     seed=1111
 
 ###############################################################################
