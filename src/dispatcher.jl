@@ -30,7 +30,7 @@ function dispatch(pars::Dict)
     maxcor  = parse(Float64, pars["cor"])
     γ       = parse(Float64, pars["gam"])
     usemean = (pars["fun"] == "mean")
-    xplsmth = parse(Bool, pars["xps"])
+    xplsmλ  = parse(Float64, pars["xps"])
     rseed   = parse(Int, pars["seed"])
     rng     = SplittableRandom(rseed)
 
@@ -46,7 +46,7 @@ function dispatch(pars::Dict)
                 use_mean   = usemean,
                 maxcor     = maxcor,
                 γ          = γ,
-                xpl_smooth = xplsmth,
+                xpl_smooth_λ = xplsmλ,
                 do_stage_2 = false
             )
 	        copyto!(ns.np.c, free_energy(tm, ns.np.betas)) # use exact free energy
@@ -76,7 +76,7 @@ function dispatch(pars::Dict)
             use_mean   = usemean,
             maxcor     = maxcor,
             γ          = γ,
-            xpl_smooth = xplsmth
+            xpl_smooth_λ = xplsmλ
         )
     end
 
