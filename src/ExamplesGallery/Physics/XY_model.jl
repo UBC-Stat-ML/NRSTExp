@@ -15,7 +15,7 @@ XYModel(S::Int, J::AbstractFloat=2.) =
 function V(tm::XYModel{TF}, θs::Vector{TF}) where {TF<:AbstractFloat}
     @unpack Sq, S, J = tm
     acc = zero(TF)
-    for (a, b) in edges(Sq)
+    @inbounds for (a, b) in edges(Sq)
         ia   = (a[1]-1)*S + a[2]
         ib   = (b[1]-1)*S + b[2]
         acc -= cos(θs[ia] - θs[ib])

@@ -4,24 +4,25 @@ using NRSTExp.ExamplesGallery
 using Random
 using SplittableRandoms
 
-tm  = TitanicHS()#MRNATrans()#XYModel(8)#HierarchicalModel()#
-rng = SplittableRandom(227)
+tm  = TitanicHS()#XYModel(12)##MRNATrans()##XYModel(8)#HierarchicalModel()#
+rng = SplittableRandom(8181)
 ns, TE, Λ = NRSTSampler(
     tm,
     rng,
     xpl_smooth_λ=3,
+    max_rounds=8
 );
 
 using Plots
 
 lσs  = [log(first(pars)) for pars in ns.np.xplpars];
 plot(lσs)
-
+plot(ns.np.nexpls)
 ens = NRST.replicate(ns.xpl, ns.np.betas);
 for (i,xpl) in enumerate(ens)
     xpl.sigma[] = randexp()
 end
-NRST.tune_explorers!(ns.np, ens, rng,smooth_λ=0);
+NRST.tune_explorers!(ns.np, ens, rng,smooth_λ=3);
 lσs  = [log(first(NRST.params(xpl))) for xpl in ens];
 plot(lσs)
 plσs = running_median(lσs, 11,:asymmetric_truncated) 

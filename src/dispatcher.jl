@@ -53,9 +53,9 @@ function dispatch(pars::Dict)
 	        need_build = false
         end
     elseif model == "XYModel_small"
-        tm = XYModel(5)
+        tm = XYModel(6)
     elseif model == "XYModel_big"
-        tm = XYModel(8)
+        tm = XYModel(12)
     elseif model == "HierarchicalModel"
         tm = HierarchicalModel()
     elseif model == "Challenger"
