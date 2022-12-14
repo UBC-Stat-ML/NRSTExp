@@ -49,7 +49,7 @@ end
 # with M_{i,j} the (standard) Metropolized Gibbs (Eq 15, j neq i)
 #     M_{i,j} = G_j min{1/(1-G_i), 1/(1-G_j)} = G_j/max{1-G_i, 1-G_j}
 # Furthermore, since log is increasing,
-#     m_j := log(M_{i,j}) = g_j - max{log1mexp(g_i),log1mexp(g_j)}, (j-i)eps>0
+#     m_j := log(M_{i,j}) = g_j - log(max{1-exp(g_i), 1-exp(g_j)})= g_j - max{log1mexp(g_i),log1mexp(g_j)}, (j-i)eps>0
 # Note: ms has missing mass, so sum(exp, ms)<1.
 function update_ms!(fbdr::FBDRSampler{T,I,K}) where {T,I,K}
     update_gs!(fbdr)
@@ -88,7 +88,7 @@ end
 # pfail_k^{eps} := 1 - sum_{l neq k} M_{k,l}^{eps}
 # this is the prob of either flipping or not chaning anything; i.e.,
 # pfail_k^{eps} = Lambda_k^{eps} + M_{k,k}^{eps}
-# (btw this shows more precisely why 2nd line in 31 is wrong)
+# (btw this shows more precisely why 2nd line in Eq 31 is wrong)
 # Then
 # Lambda_k^{eps} = max{0,  1-pfail_k^{-eps}-  1+pfail_k^{eps}}
 # = max{0,  pfail_k^{eps} - pfail_k^{-eps}}

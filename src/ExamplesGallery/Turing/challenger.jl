@@ -10,7 +10,12 @@ struct ChalLogistic{TF<:AbstractFloat,TMVN<:AbstractMvNormal} <: TemperedModel
     ys::BitVector
     MVN::TMVN
 end
-ChalLogistic() = ChalLogistic(10., 100., chal_load_data()..., MvNormal(2, 10.))
+function ChalLogistic()
+    σ₀  = 10.
+    σ₀² = σ₀*σ₀
+    mvn = MvNormal(Diagonal(Fill(σ₀², 2)))
+    ChalLogistic(σ₀, σ₀², chal_load_data()..., mvn)
+end
 
 function chal_load_data()
     dta = readdlm(pkgdir(NRSTExp, "data", "challenger.csv"), ',', skipstart=1)
