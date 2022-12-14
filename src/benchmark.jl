@@ -17,7 +17,7 @@ function benchmark(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
     R = NRST.rejrates(res)
     Λ = sum(NRST.averej(R))
     ntours = NRST.get_ntours(res)
-    ntours_small = max(2048, ceil(TI,ntours/10)) # to estimate TE in other samplers
+    ntours_small = max(2048, ceil(Int, ntours/10)) # to estimate TE in other samplers
 
     # CompetingSamplers
     ## Simulated Tempering
