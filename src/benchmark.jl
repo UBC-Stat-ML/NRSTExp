@@ -10,7 +10,7 @@ function benchmark(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
     tlens = tourlengths(res)
     nvevs = map(tr -> get_nvevals(tr,ns.np.nexpls), res.trvec)
     TE    = last(res.toureff)
-    saveres!(df, "NRST", tlens, nvevs, TE)
+    saveres!(df, "NRST", tlens, nvevs, TE, ntours)
 
     # inputs used for other processes
     N = ns.np.N
@@ -28,7 +28,7 @@ function benchmark(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
     tlens = tourlengths(res)
     nvevs = map(tr -> get_nvevals(tr,ns.np.nexpls), res.trvec)
     TE    = last(res.toureff)
-    saveres!(df, "GT95", tlens, nvevs, TE)
+    saveres!(df, "GT95", tlens, nvevs, TE, NRST.get_ntours(res))
 
     ### SH16
     sh    = SH16Sampler(ns)
@@ -37,7 +37,7 @@ function benchmark(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
     tlens = tourlengths(res)
     nvevs = map(tr -> get_nvevals(tr,ns.np.nexpls), res.trvec)
     TE    = last(res.toureff)
-    saveres!(df, "SH16", tlens, nvevs, TE)
+    saveres!(df, "SH16", tlens, nvevs, TE, NRST.get_ntours(res))
 
     ### FBDR
     fbdr  = FBDRSampler(ns)
@@ -46,26 +46,25 @@ function benchmark(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
     tlens = tourlengths(res)
     nvevs = map(tr -> get_nvevals(tr,ns.np.nexpls), res.trvec)
     TE    = last(res.toureff)
-    saveres!(df, "FBDR", tlens, nvevs, TE)
+    saveres!(df, "FBDR", tlens, nvevs, TE, NRST.get_ntours(res))
 
     # IdealIndexProcesses
     # BouncyMC: perfect tuning
     tlens, vNs = run_tours!(BouncyMC(Λ/N,N), ntours)
     TE    = TE_est(vNs)
     nvevs = -1 # technically infty so it's not meaningful
-    saveres!(df, "DTPerf", tlens, nvevs, TE)
+    saveres!(df, "DTPerf", tlens, nvevs, TE, ntours)
 
     # BouncyMC: actual rejections
     tlens, vNs = run_tours!(BouncyMC(R), ntours)
     TE    = TE_est(vNs)
     nvevs = -1 # technically infty so it's not meaningful
-    saveres!(df, "DTAct", tlens, nvevs, TE)
+    saveres!(df, "DTAct", tlens, nvevs, TE, ntours)
 
 
     # add other metadata
     insertcols!(df, :N => N)
     insertcols!(df, :Lambda => Λ)
-    insertcols!(df, :ntours => ntours)
 
     return df
 end

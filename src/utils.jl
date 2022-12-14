@@ -10,11 +10,12 @@ function get_nvevals(tr::NRST.NRSTTrace{T,TI}, nexpls::AbstractVector) where {T,
 end
 
 # store results into df
-function saveres!(df::AbstractDataFrame, proc, tlens, nvevs, TE)
+function saveres!(df::AbstractDataFrame, proc, tlens, nvevs, TE, ntours)
     append!(df,
         DataFrame(
             proc=proc, rtser=sum(tlens), rtpar=maximum(tlens),
-            costser=sum(nvevs), costpar=maximum(nvevs), TE=TE
+            costser=sum(nvevs), costpar=maximum(nvevs), TE=TE,
+            ntours=ntours
         )
     )
 end
