@@ -10,13 +10,13 @@ function benchmark(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
     tlens = tourlengths(res)
     nvevs = map(tr -> get_nvevals(tr,ns.np.nexpls), res.trvec)
     TE    = last(res.toureff)
+    ntours= NRST.get_ntours(res)
     saveres!(df, "NRST", tlens, nvevs, TE, ntours)
 
     # inputs used for other processes
     N = ns.np.N
     R = NRST.rejrates(res)
     Λ = sum(NRST.averej(R))
-    ntours = NRST.get_ntours(res)
     ntours_small = max(2048, ceil(Int, ntours/10)) # to estimate TE in other samplers
 
     # CompetingSamplers
