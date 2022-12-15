@@ -3,13 +3,19 @@ using NRSTExp
 using NRSTExp.ExamplesGallery
 using SplittableRandoms
 
-tm  = ChalLogistic();#TitanicHS()#MRNATrans()#XYModel(6)#HierarchicalModel()##XYModel(12)##MRNATrans()##XYModel(8)##
-rng = SplittableRandom(5470)
+tm  = TitanicHS()#ChalLogistic();##MRNATrans()#XYModel(6)#HierarchicalModel()##XYModel(12)##MRNATrans()##XYModel(8)##
+rng = SplittableRandom(40322)
 ns, TE, Λ = NRSTSampler(
     tm,
     rng,
+    γ=16.0,
+    max_rounds=8
 );
 
+using Plots
+lσs = [log(first(pars)) for pars in ns.np.xplpars];
+plot(lσs)
+ns.x
 ###############################################################################
 # example system call
 ###############################################################################

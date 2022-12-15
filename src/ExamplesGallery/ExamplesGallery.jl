@@ -25,7 +25,7 @@ export HalfCauchy
 include("Turing/hierarchical_model.jl")
 include("Turing/challenger.jl")
 include("Turing/MRNATransfection.jl")
-include("Turing/Titanic.jl")
+include("Turing/TitanicHS.jl")
 export HierarchicalModel, HierarchicalModelTuring
 export ChalLogistic, ChalLogisticTuring
 export MRNATrans, MRNATransTuring
