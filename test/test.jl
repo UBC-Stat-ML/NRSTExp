@@ -3,7 +3,7 @@ using NRSTExp
 using NRSTExp.ExamplesGallery
 using SplittableRandoms
 
-tm  = TitanicHS()#ChalLogistic();##MRNATrans()#XYModel(6)#HierarchicalModel()##XYModel(12)##MRNATrans()##XYModel(8)##
+tm  = ChalLogistic();##MRNATrans()#XYModel(6)#HierarchicalModel()##XYModel(12)##MRNATrans()##XYModel(8)##
 rng = SplittableRandom(40322)
 ns, TE, Λ = NRSTSampler(
     tm,
@@ -12,10 +12,7 @@ ns, TE, Λ = NRSTSampler(
     max_rounds=8
 );
 
-using Plots
-lσs = [log(first(pars)) for pars in ns.np.xplpars];
-plot(lσs)
-ns.x
+
 ###############################################################################
 # example system call
 ###############################################################################

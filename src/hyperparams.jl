@@ -11,12 +11,11 @@ function hyperparams(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
     tlens = tourlengths(res)
     nvevs = map(tr -> get_nvevals(tr,ns.np.nexpls), res.trvec)
     TE    = res.toureff[end]
-    saveres!(df, "NRST", tlens, nvevs, TE, ntours)
+    saveres!(df, "NRST", tlens, nvevs, TE, NRST.get_ntours(res))
 
     # add other metadata
     N = ns.np.N
     Λ = sum(NRST.averej(res))
-    ntours = NRST.get_ntours(res)
     insertcols!(df, :N => N)
     insertcols!(df, :Lambda => Λ)
 
