@@ -4,19 +4,14 @@ using NRSTExp.ExamplesGallery
 using SplittableRandoms
 
 # define and tune an NRSTSampler as template
-tm  = TitanicHS()
-rng = SplittableRandom(753)
+tm  = ChalLogistic()
+rng = SplittableRandom(5470)
 ns, TE, Λ = NRSTSampler(
     tm,
     rng,
-    γ=14.,
-    maxcor=0.6,
 )
-using Plots
 
-lσs = [log(first(pars)) for pars in ns.np.xplpars]
-plot(lσs)
-findmax(ns.np.nexpls)
+
 ###############################################################################
 # example system call
 ###############################################################################
