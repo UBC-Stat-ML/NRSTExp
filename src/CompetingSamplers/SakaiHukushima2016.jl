@@ -27,92 +27,54 @@ SH16Sampler(ns::NRSTSampler) = SH16Sampler(NRST.copyfields(ns)...)
 #     q_{0,1}^{eps} = q_{N,N-1}^{eps} = 1, at boundaries // this is true for all δ
 #     q_{r,l}^{eps} = 1{l=r+eps},          o.w.
 # Let
-#     W_{r,l} := max{0,P_l/P_r} = exp{max{0,-nlar}}
+#     W_{r,l}^{eps} := min{1, [q_{l,r}^{-eps}/q_{r,l}^{eps}] [P_l/P_r] }
 # Then
 #     W_{0,1}^{-} = 0                // since q_{1,0}^+ = 0 but q_{0,1}^-=1 (i.e., well-defined)
 #     W_{N,N-1}^{+} = 0              // since q_{N-1,N}^- = 0 but q_{N,N-1}^+=1 (i.e., well-defined)
-#     W_{r,l}^{eps} = W_{r,l}, o.w.
+# Hence
+#     W_{r,l}^{eps} = 1{0 <= r+eps <= N}} min{1,P_l/P_r}, o.w.
+# Finally,
+#     T_{r,l}^{eps} = q_{r,l}^{eps}W_{r,l}^{eps}
 function propose_i(sh::SH16Sampler{T,I,K}) where {T,I,K}
     @unpack np,ip,curV = sh
     @unpack N,betas,c = np
-    i    = first(ip)
-    ϵ    = last(ip)
-    nlpr = zero(K)
+    i   = first(ip)
+    ϵ   = last(ip)
+    lhr = zero(K)  # log Hastings ratio
     if i == zero(I)
         iprop = one(I)
-        ϵ < zero(I) && (nlpr = K(Inf))
+        ϵ < zero(I) && (lhr = K(-Inf))
     elseif i == N
         iprop = N-one(I)
-        ϵ > zero(I) && (nlpr = K(Inf))
+        ϵ > zero(I) && (lhr = K(-Inf))
     else
-        iprop = sum(ip)  # i+ϵ
+        iprop = i + ϵ
     end        
-    nltr = NRST.get_nlar(betas[i+1],betas[iprop+1],c[i+1],c[iprop+1],curV[])
-    return iprop, nlpr, nltr
+    ltr = -NRST.get_nlar(betas[i+1],betas[iprop+1],c[i+1],c[iprop+1],curV[])
+    lpm = min(zero(K), lhr + ltr)
+    return iprop, lpm
 end
 
-# Compute flip eps prob. This is Equations 15 & 16
-# Note: for δ=1,
-#    Λ_r^eps =  max{0, eps*S_r}
-# where
-#    S_r = sum_{l neq r}[q_{r,l}^{-}W_{r,l}^{-} - q_{r,l}^{+}W_{r,l}^{+}]
-#        = {
-#          -W_{0,1},          r=0
-#          W_{N,N-1},         r=N
-#          W_{r,r-1} - W_{r,r+1}, o.w.
-# then we can write for 0<r<N
-#    Λ_r^eps = max{0, W_{r,r-eps} - W_{r,r+eps} } 
-# also
-#    λ_r^eps = Λ_r^eps/D_r^eps
-# with
-#    D_r^eps = 1 - sum_{l neq r}q_{r,l}^{eps}W_{r,l}^{eps}
-# = {
-#    1-W_{0,1}^{eps},   r=0
-#    1-W_{N,N-1}^{eps}, r=N
-#    1-W_{r,r+eps},     o.w.
-# finally
-#    λ_r^eps = {
-#     0,               (r,eps)=(0,+)  // Λ_0^+=max{0, S_0}=0 (S_0<=0)
-#     W_{0,1},         (r,eps)=(0,-)  // W_{0,1}^{-} = 0 (see above function's comments)
-#     W_{N,N-1},       (r,eps)=(N,+)  // W_{N,N-1}^{+} = 0 (same)
-#     0,               (r,eps)=(N,-)  // Λ_N^-=-min{0, S_N}=0 (S_N>=0)
-#     max{0, W_{r,r-eps} - W_{r,r+eps}} / [1 - W_{r,r+eps}], for 0<r<N // note this lies in [0,1]
-function propose_flip(sh::SH16Sampler{T,I,K}, nltr) where {T,I,K}
-    @unpack np,ip,curV = sh
-    @unpack N,betas,c = np
-    i = first(ip)
-    ϵ = last(ip)
-    nlar_ϵ = K(Inf)
-    if (i == zero(I) && ϵ < zero(I)) || (i == N && ϵ > zero(I))
-        nlar_ϵ = nltr
-    elseif zero(I) < i && i < N
-        apif = NRST.nlar_2_ap(nltr) # acc prob of i move in direction of eps (fwd)
-        ibwd = i-ϵ
-        apib = NRST.nlar_2_ap(      # acc prob of i move in opp direction of eps (bwd)
-            NRST.get_nlar(betas[i+1],betas[ibwd+1],c[i+1],c[ibwd+1],curV[])
-        )
-        apib>apif && ( nlar_ϵ = log1p(-apif) - log(apib-apif) )
-    end
-    return nlar_ϵ
-end
-
-# both of the above
-function propose(sh::SH16Sampler)
-    iprop, nlpr, nltr = propose_i(sh)
-    nlar_i = nlpr+nltr
-    nlar_ϵ = propose_flip(sh, nltr) # we could avoid computing this for first case but good to have for checking 
-    iprop, nlar_i, nlar_ϵ
+# compute log prob of flipping. note: it changes ip!
+function get_lpflip!(sh::SH16Sampler{T,I,K}, lpm) where {T,I,K}
+    lpff      = log1mexp(lpm)                     # log prob of failing the i move = log(1- exp(lpm))=log1mexp(lpm) 
+    sh.ip[2] *= -one(I)                           # simulate flip
+    _, lpmb   = propose_i(sh)                     # get prob moving i if we had flipped 
+    lpfb      = log1mexp(lpmb)                    # log prob of failing to move i if we had moved in the opp direction
+    lpflip    = log1mexp(min(zero(K), lpfb-lpff)) # pflip = max(0, pff - pfb)/pff = max(0, 1 - exp(lpfb-lpff))
+    return lpflip
 end
 
 # full tempering step. This is point (1) of the algorithm in Sec. 3.2.
 function NRST.comm_step!(sh::SH16Sampler{T,I,K}, rng::AbstractRNG) where {T,I,K}
-    iprop, nlar_i, nlar_ϵ = propose(sh)
-    if nlar_i < randexp(rng)
+    iprop, lpm = propose_i(sh)
+    if -lpm < randexp(rng)
         sh.ip[1] = iprop
-    elseif nlar_ϵ < randexp(rng)
-        sh.ip[2] *= -one(I)
+    else
+        lpflip = get_lpflip!(sh, lpm)                   # compute flip probability by simulating a flip
+        -lpflip > randexp(rng) && (sh.ip[2] *= -one(I)) # failed, need to undo the simulated flip inside get_lpflip!
     end
-    return NRST.nlar_2_rp(nlar_ϵ)
+    return -expm1(lpm)
 end
 
 # same step! method as NRST
@@ -123,15 +85,18 @@ end
 
 # same atom as NRST, no need for specialized isinatom method
 
-# reset state by sampling from the renewal measure. Since
-#     W_{0,1}^{-} = 0 
-# we know for certain that the renewal measure only puts mass on (X,0,+1)
-# Therefore, we can just use the same as for NRST
-# function NRST.renew!
+# reset state by sampling from the renewal measure
+# Although W_{0,1}^{-}=0 <=> pfail_0^{-} = 1, it is not clear that pfail_0^{+}=0.
+# Therefore, it is not clear that SH16 always flips at (0,-), so safer to have 
+# a specialized renew method
+function NRST.renew!(sh::SH16Sampler{T,I}, rng::AbstractRNG) where {T,I}
+    sh.ip[1] = zero(I)
+    sh.ip[2] = -one(I)
+    NRST.step!(sh, rng)
+end
 
-# handling last tour step
+# handling last tour step. same as NRST.
 function NRST.save_last_step_tour!(sh::SH16Sampler{T,I,K}, tr; kwargs...) where {T,I,K}
-    NRST.save_pre_step!(sh, tr; kwargs...)                       # store state at atom
-    _, _, nlar_ϵ = propose(sh)                                   # simulate a proposal
-    NRST.save_post_step!(sh, tr, NRST.nlar_2_rp(nlar_ϵ), K(NaN)) # save stats
+    NRST.save_pre_step!(sh, tr; kwargs...)       # store state at atom
+    NRST.save_post_step!(sh, tr, one(K), K(NaN)) # move towards 1 from (0,-) is always rejected. Also, it doesn't use an explorer so NaN.
 end
