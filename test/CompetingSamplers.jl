@@ -9,7 +9,8 @@
         adapt_N_rounds=0
     )
 
-    # set V to a value of the finite differences of c
+    # set V to a value of the finite derivative of c
+    # encourages the target dist to concentrate around that index
     N     = ns.np.N
     nlvls = N+1
     ri    = ceil(Int, rand(rng)*N)
