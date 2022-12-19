@@ -30,7 +30,7 @@ function dispatch(pars::Dict)
     maxcor  = parse(Float64, pars["cor"])
     γ       = parse(Float64, pars["gam"])
     usemean = (pars["fun"] == "mean")
-    xplsmλ  = parse(Int, pars["xps"])
+    xplsmλ  = parse(Float64, pars["xps"])
     rseed   = parse(Int, pars["seed"])
     rng     = SplittableRandom(rseed)
 

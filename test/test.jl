@@ -9,7 +9,12 @@ rng = SplittableRandom(5470)
 ns, TE, Λ = NRSTSampler(
     tm,
     rng,
+    N=12,
+    adapt_N_rounds=0
 )
+N     = ns.np.N
+nlvls = N+1
+atol  = √eps()
 
 
 ###############################################################################
