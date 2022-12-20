@@ -41,6 +41,18 @@
             T⁺, T⁻, Λ⁺, Λ⁻ = splitTransMat(P)
             @test Λ⁺ - Λ⁻ ≈ sum(T⁻ - T⁺,dims=2)      # this is implied
             @test isapprox(diag(T⁺), diag(T⁻), atol=atol) # this condition is not explicit in SDBC papers but it's true. Need atol due to cases where all entries are ~0
+
+            # check formula for staying probs holds
+            # note: SH16 is non-standard (relative to Turitsyn et al.) in that it satisfies for i neq j 
+            #    T⁺_ij + T⁻_ij = 2M_ij ∝ M_ij
+            # where M_ij is the transition for a (reversible) symmetric random walk.
+            # Thus, the formula changes to
+            #    2T⁺_ii = 2T⁻_ii = 2M_ii - (Λ⁺_i + Λ⁻_i)
+            M = symRandWalkTransMat(fbdr.gs)
+            π∞_M = nullspace(M'-I)[:,1]
+            π∞_M = π∞_M ./ sum(π∞_M)
+            @test π∞_M ≈ π∞_tru                      # correct stationary distribution
+            @test isapprox(2diag(T⁻), 2diag(M)-(Λ⁺ + Λ⁻), atol=atol) # formula for prob of staying (not explicit in the papers either)
         end
     end
 

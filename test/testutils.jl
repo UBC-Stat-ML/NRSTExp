@@ -2,6 +2,22 @@
 # CompetingSamplers
 #######################################
 
+# compute transition matrix for a symmetric random walk from the Gibbs logprobs
+function symRandWalkTransMat(gs::AbstractVector)
+    nlvls = length(gs)
+    Mrows = [zeros(nlvls) for _ in 1:nlvls];
+    for ii in 1:nlvls
+        # ii = 1
+        jj = ii+1
+        jj <= nlvls && (Mrows[ii][jj] = 0.5min(1., exp(gs[jj] - gs[ii])))
+        jj = ii-1
+        jj > 0 && (Mrows[ii][jj] = 0.5min(1., exp(gs[jj] - gs[ii])))
+        Mrows[ii][ii] = max(0., min(1., 1. - sum(Mrows[ii])))
+    end
+    M = collect(hcat(Mrows...)')
+    return M
+end
+
 # compute a row of (reversible) MetropolizedGibbs
 function MetroGibbs(gs, idx)
     log1mexpgi = log1mexp(gs[idx])
