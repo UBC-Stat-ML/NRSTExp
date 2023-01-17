@@ -6,7 +6,7 @@ function benchmark(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
     df = DataFrame() # init empty DataFrame
 
     # NRST
-    res   = parallel_run(ns, rng, TE=TE, keep_xs=false);
+    res   = parallel_run(ns, rng, TE=TE)
     tlens = tourlengths(res)
     nvevs = map(tr -> get_nvevals(tr,ns.np.nexpls), res.trvec)
     TE    = last(res.toureff)
@@ -23,8 +23,8 @@ function benchmark(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
     ## Simulated Tempering
     ### GT95
     gt    = GT95Sampler(ns)
-    TE    = last(parallel_run(gt, rng, ntours=ntours_small, keep_xs=false).toureff)
-    res   = parallel_run(gt, rng, TE=TE, keep_xs=false)
+    TE    = last(parallel_run(gt, rng, ntours=ntours_small).toureff)
+    res   = parallel_run(gt, rng, TE=TE)
     tlens = tourlengths(res)
     nvevs = map(tr -> get_nvevals(tr,ns.np.nexpls), res.trvec)
     TE    = last(res.toureff)
@@ -32,8 +32,8 @@ function benchmark(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
 
     ### SH16
     sh    = SH16Sampler(ns)
-    TE    = last(parallel_run(sh, rng, ntours=ntours_small, keep_xs=false).toureff)
-    res   = parallel_run(sh, rng, TE=TE, keep_xs=false)
+    TE    = last(parallel_run(sh, rng, ntours=ntours_small).toureff)
+    res   = parallel_run(sh, rng, TE=TE)
     tlens = tourlengths(res)
     nvevs = map(tr -> get_nvevals(tr,ns.np.nexpls), res.trvec)
     TE    = last(res.toureff)
@@ -41,8 +41,8 @@ function benchmark(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
 
     ### FBDR
     fbdr  = FBDRSampler(ns)
-    TE    = last(parallel_run(fbdr, rng, ntours=ntours_small, keep_xs=false).toureff)
-    res   = parallel_run(fbdr, rng, TE=TE, keep_xs=false)    
+    TE    = last(parallel_run(fbdr, rng, ntours=ntours_small).toureff)
+    res   = parallel_run(fbdr, rng, TE=TE)    
     tlens = tourlengths(res)
     nvevs = map(tr -> get_nvevals(tr,ns.np.nexpls), res.trvec)
     TE    = last(res.toureff)
