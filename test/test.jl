@@ -33,12 +33,12 @@ logpdf(NoncentralT(3.,10.), 1.0)
 
 # julia --project -t 4 \
 #     -e "using NRSTExp; dispatch()" \
-#     exp=hyperparams  \
+#     exp=benchmark  \
 #     mod=Challenger  \
 #     fun=mean    \
-#     cor=0.9 \
-#     gam=8.0  \
-#     xps=1e-5 \
+#     cor=0.6 \
+#     gam=25.0  \
+#     xps=0.1 \
 #     seed=1111
 
 ###############################################################################

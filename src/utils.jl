@@ -5,7 +5,10 @@
 TE_est(vNs::AbstractVector) = (sum(vNs) ^ 2) / (length(vNs)*sum(abs2, vNs))
 
 # compute number of V evaluations per tour. assume 1 per explorer step
-function get_nvevals(tr::NRST.NRSTTrace{T,TI}, nexpls::AbstractVector) where {T,TI<:Int}
+function get_nvevals(res::NRST.RunResults, nexpls::AbstractVector)
+    map(tr -> get_nvevals(tr, nexpls), res.trvec)
+end
+function get_nvevals(tr::NRST.AbstractTrace{T,TI}, nexpls::AbstractVector) where {T,TI<:Int}
     sum(ip -> ip[1]>zero(TI) ? nexpls[ip[1]] : one(TI), tr.trIP)
 end
 
