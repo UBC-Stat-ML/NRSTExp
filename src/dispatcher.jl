@@ -52,10 +52,8 @@ function dispatch(pars::Dict)
 	        copyto!(ns.np.c, free_energy(tm, ns.np.betas)) # use exact free energy
 	        need_build = false
         end
-    elseif model == "XYModel_small"
+    elseif model == "XYModel"
         tm = XYModel(8)
-    elseif model == "XYModel_big"
-        tm = XYModel(12)
     elseif model == "HierarchicalModel"
         tm = HierarchicalModel()
     elseif model == "Challenger"
@@ -63,7 +61,7 @@ function dispatch(pars::Dict)
     elseif model == "MRNATrans"
         tm = MRNATrans()
     elseif model == "Titanic"
-        tm = TitanicHS()
+        tm = Titanic()
     else
         throw(ArgumentError("Model $model not yet implemented."))
     end
