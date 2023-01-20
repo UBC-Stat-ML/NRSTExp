@@ -4,7 +4,7 @@ using Distributions: Exponential
 using StaticArrays: MVector
 using Statistics: mean, std
 using FillArrays: Fill
-import NRST: renew!, tour!, run_tours!
+import NRST: renew!, tour!
 
 export BouncyPDMP, BouncyMC, run_tours!, toureff
 abstract type Bouncy end

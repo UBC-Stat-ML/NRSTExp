@@ -22,15 +22,15 @@ SH16Sampler(ns::NRSTSampler) = SH16Sampler(NRST.copyfields(ns)...)
 # communication step
 #######################################
 
-# Compute proposed i, neglog-prop-ratio (nlpr), and neglog-target-ratio (nltr). 
+# Propose i and compute log target ratio, log Hastings ratio, and logprob of moving. 
 # This is eqs 12, 13, 14. Note: for δ=1 the proposals are deterministic
 #     q_{0,1}^{eps} = q_{N,N-1}^{eps} = 1, at boundaries // this is true for all δ
 #     q_{r,l}^{eps} = 1{l=r+eps},          o.w.
 # Let
 #     W_{r,l}^{eps} := min{1, [q_{l,r}^{-eps}/q_{r,l}^{eps}] [P_l/P_r] }
 # Then
-#     W_{0,1}^{-} = 0                // since q_{1,0}^+ = 0 but q_{0,1}^-=1 (i.e., well-defined)
-#     W_{N,N-1}^{+} = 0              // since q_{N-1,N}^- = 0 but q_{N,N-1}^+=1 (i.e., well-defined)
+#     W_{0,1}^{-} = 0                // since q_{1,0}^+ = 0 but q_{0,1}^-=1 (i.e., well-defined but 0)
+#     W_{N,N-1}^{+} = 0              // since q_{N-1,N}^- = 0 but q_{N,N-1}^+=1 (i.e., well-defined but 0)
 # Hence
 #     W_{r,l}^{eps} = 1{0 <= r+eps <= N}} min{1,P_l/P_r}, o.w.
 # Finally,
