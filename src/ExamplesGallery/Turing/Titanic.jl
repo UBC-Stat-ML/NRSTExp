@@ -69,3 +69,34 @@ function titanic_load_data()
     X   = dta[:,2:end]
     return X, y
 end
+
+#######################################
+# turing version
+#######################################
+
+# Define a model using the `DynamicPPL.@model` macro.
+@model function TitanicTuring(X, y)
+    N,D = size(X)
+    α ~ TDist(3)                        # Intercept
+    β = similar(X, D)
+    for j in 1:D
+        β[j] ~ TDist(3)
+    end
+    Xβ = X * β
+    for i in 1:N
+        y[i] ~ BernoulliLogit(α + Xβ[i])
+    end
+end
+
+# # check that both match
+# tm  = Titanic()
+# rng = SplittableRandom(44697)
+# ns, TE, Λ = NRSTSampler(
+#     tm,
+#     rng,
+#     tune=false
+# );
+# tmT = NRST.TuringTemperedModel(TitanicTuring(tm.X,tm.y))
+# rand!(tm,rng,ns.x)
+# NRST.Vref(tm, ns.x) ≈ NRST.Vref(tmT, ns.x)
+# NRST.V(tm, ns.x) ≈ NRST.V(tmT, ns.x)
