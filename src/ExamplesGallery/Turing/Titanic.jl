@@ -1,7 +1,8 @@
 ##############################################################################
 # simple logistic regression with t(3) priors
-#     α   ~ t(3)
-#     β_j ~ t(3) iid
+#     σ   ~ Exp(1)     
+#     α   ~ Cauchy(0,σ)
+#     β_j ~ Cauchy(0,σ) iid
 #     y_i ~ Bernoulli(logistic(α + <β,x_i>))
 ##############################################################################
 
@@ -17,43 +18,57 @@ struct Titanic{TF<:AbstractFloat, TI<:Int} <: TemperedModel
     n::TI
     p::TI
     lenx::TI
-    T::TDist{TF}
+    E::Exponential{TF}
 end
 function Titanic()
     X, y = titanic_load_data()
     n, p = size(X)
-    Titanic(X, y, similar(X,n), n, p, 1+p, TDist(3))
+    Titanic(X, y, similar(X,n), n, p, 2+p, Exponential())
 end
 
 # copy method. keeps everything common except temp storage Xβ. this is needed
 # in order to avoid race conditions when sampling in parallel
 function Base.copy(tm::Titanic)
-    Titanic(tm.X, tm.y, similar(tm.X, tm.n), tm.n, tm.p, tm.lenx, tm.T)
+    Titanic(tm.X, tm.y, similar(tm.X, tm.n), tm.n, tm.p, tm.lenx, tm.E)
 end
 
 # split x into components
 function split(tm::Titanic{TF}, x::AbstractVector{TF}) where {TF}
-    ( α = x[1], β = view(x, 2:tm.lenx) )
+    ( lσ = x[1], α = x[2], β = view(x, 3:tm.lenx) )
 end
 
 # methods for the prior
 function NRST.Vref(tm::Titanic{TF}, x) where {TF}
-    α, β       = split(tm, x)
+    lσ, α, β   = split(tm, x)
+    σ          = exp(lσ)
+    (σ < eps(TF)) && return TF(Inf)
     acc        = zero(TF)
-    isinf(acc -= logpdf(tm.T, α)) && return acc
+    isinf(acc -= logpdf(tm.E, σ)) && return acc
+    acc       -= lσ                                        # logabsdetjac
+    C          = Cauchy(zero(TF), σ)
+    isinf(acc -= logpdf(C, α)) && return acc
     for βᵢ in β
-        isinf(acc -= logpdf(tm.T, βᵢ)) && return acc
+        isinf(acc -= logpdf(C, βᵢ)) && return acc
     end
     return acc
 end
-Random.rand!(tm::Titanic, rng, x) = rand!(rng, tm.T, x)
+function Random.rand!(tm::Titanic{TF}, rng, x) where {TF}
+    σ    = rand(rng, tm.E)
+    x[1] = log(σ)
+    C    = Cauchy(zero(TF), σ)
+    x[2] = rand(rng, C)
+    for i in 3:tm.lenx
+        x[i] = rand(rng, C)
+    end
+    return x
+end
 function Base.rand(tm::Titanic{TF}, rng) where {TF}
     rand!(tm, rng, Vector{TF}(undef, tm.lenx))
 end
 
 # method for the likelihood potential
 function NRST.V(tm::Titanic{TF}, x) where {TF}
-    α, β = split(tm, x)
+    _, α, β = split(tm, x)
     mul!(tm.Xβ, tm.X, β)
     acc = zero(TF)
     for (i, yᵢ) in enumerate(tm.y)
@@ -77,10 +92,11 @@ end
 # Define a model using the `DynamicPPL.@model` macro.
 @model function TitanicTuring(X, y)
     N,D = size(X)
-    α ~ TDist(3)                        # Intercept
+    σ ~ Exponential()
+    α ~ Cauchy(0.,σ)                        # Intercept
     β = similar(X, D)
     for j in 1:D
-        β[j] ~ TDist(3)
+        β[j] ~ Cauchy(0.,σ)
     end
     Xβ = X * β
     for i in 1:N
@@ -96,7 +112,7 @@ end
 #     rng,
 #     tune=false
 # );
-# tmT = NRST.TuringTemperedModel(TitanicTuring(tm.X,tm.y))
+# tmT = NRST.TuringTemperedModel(NRSTExp.ExamplesGallery.TitanicTuring(tm.X,tm.y))
 # rand!(tm,rng,ns.x)
 # NRST.Vref(tm, ns.x) ≈ NRST.Vref(tmT, ns.x)
 # NRST.V(tm, ns.x) ≈ NRST.V(tmT, ns.x)
