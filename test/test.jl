@@ -17,7 +17,7 @@ ns, TE, Λ = NRSTSampler(
 
 # julia --project -t 4 \
 #     -e "using NRSTExp; dispatch()" \
-#     exp=benchmark  \
+#     exp=hyperparams  \
 #     mod=Challenger  \
 #     fun=mean    \
 #     cor=0.6 \

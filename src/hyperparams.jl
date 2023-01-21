@@ -9,8 +9,8 @@ function hyperparams(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
     # NRST
     res   = parallel_run(ns, rng, TE=TE)
     tlens = tourlengths(res)
-    nvevs = map(tr -> get_nvevals(tr,ns.np.nexpls), res.trvec)
-    TE    = res.toureff[end]
+    nvevs = get_nvevals(res, ns.np.nexpls)
+    TE    = last(res.toureff)
     saveres!(df, "NRST", tlens, nvevs, TE, NRST.get_ntours(res))
 
     # add other metadata
