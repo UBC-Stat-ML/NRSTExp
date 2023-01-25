@@ -31,13 +31,13 @@ res=parallel_run(ns,rng,TE=TE);
 
 # julia --project -t 4 \
 #     -e "using NRSTExp; dispatch()" \
-#     exp=benchmark  \
-#     mod=XYModel  \
-#     fun=mean    \
-#     cor=0.6 \
-#     gam=25.0  \
+#     exp=hyperparams  \
+#     mod=HierarchicalModel  \
+#     fun=median    \
+#     cor=0.95 \
+#     gam=10.0  \
 #     xps=0.1 \
-#     seed=24482
+#     seed=2798
 
 ###############################################################################
 # end

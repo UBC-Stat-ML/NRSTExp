@@ -10,14 +10,14 @@ function dispatch()
     display(pars)
     println("\nLaunching experiment...")
     dfres = dispatch(pars)
-    
+    fn = "NRSTExp_" * string(hash(join(ARGS)), base = 16)
     if hasproperty(dfres,:error)
+        touch(fn * ".tsv")                              # create empty file to avoid problem in nextflow
         @warn "$(dfres[1,:error])\nExiting."
     else
         # write data
         println("\nNRSTExp: experiment finished successfully!")
         print("\tWriting metadata...")
-        fn = "NRSTExp_" * string(hash(join(ARGS)), base = 16)
         open(fn * ".tsv", "w") do io
             writedlm(io, pars)
         end
