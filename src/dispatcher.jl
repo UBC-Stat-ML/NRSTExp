@@ -11,8 +11,8 @@ function dispatch()
     println("\nLaunching experiment...")
     dfres = dispatch(pars)
     
-    if hasproperty(df,:error)
-        @warn "$(df[1,:error])\nExiting."
+    if hasproperty(dfres,:error)
+        @warn "$(dfres[1,:error])\nExiting."
     else
         # write data
         println("\nNRSTExp: experiment finished successfully!")
