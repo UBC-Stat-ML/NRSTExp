@@ -5,6 +5,7 @@ using DataFrames
 using DelimitedFiles: writedlm
 using CSV: CSV
 using NRST
+using ParetoSmooth: ParetoSmooth
 using SplittableRandoms: SplittableRandom
 
 export dispatch

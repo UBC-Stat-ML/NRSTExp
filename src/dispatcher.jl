@@ -11,16 +11,20 @@ function dispatch()
     println("\nLaunching experiment...")
     dfres = dispatch(pars)
     
-    # write data
-    println("\nNRSTExp: experiment finished successfully!")
-    print("\tWriting metadata...")
-    fn = "NRSTExp_" * string(hash(join(ARGS)), base = 16)
-    open(fn * ".tsv", "w") do io
-        writedlm(io, pars)
+    if hasproperty(df,:error)
+        @warn "$(df[1,:error])\nExiting."
+    else
+        # write data
+        println("\nNRSTExp: experiment finished successfully!")
+        print("\tWriting metadata...")
+        fn = "NRSTExp_" * string(hash(join(ARGS)), base = 16)
+        open(fn * ".tsv", "w") do io
+            writedlm(io, pars)
+        end
+        print("done!\n\tWriting data...")
+        CSV.write(fn * ".csv.gz", dfres, compress=true) # use gzip compression
+        println("done!\nGood bye!")
     end
-    print("done!\n\tWriting data...")
-    CSV.write(fn * ".csv.gz", dfres, compress=true) # use gzip compression
-    println("done!\nGood bye!")
     return
 end
 

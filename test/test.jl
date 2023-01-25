@@ -4,12 +4,16 @@ using NRSTExp.ExamplesGallery
 using SplittableRandoms
 
 # define and tune an NRSTSampler as template
-tm  = Titanic()
-rng = SplittableRandom(44697)
+tm  = XYModel(8)
+rng = SplittableRandom(1040)
 ns, TE, Λ = NRSTSampler(
     tm,
     rng,
+    maxcor     = 0.9999,
+    γ          = 15.0,
+    xpl_smooth_λ = 0.1,
 );
+res=parallel_run(ns,rng,TE=TE);
 
 ###############################################################################
 # example system call
@@ -20,7 +24,7 @@ ns, TE, Λ = NRSTSampler(
 #     exp=hyperparams  \
 #     mod=Challenger  \
 #     fun=mean    \
-#     cor=0.6 \
+#     cor=1.0 \
 #     gam=25.0  \
 #     xps=0.1 \
 #     seed=1111
