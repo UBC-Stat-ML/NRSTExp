@@ -10,21 +10,17 @@ function dispatch()
     display(pars)
     println("\nLaunching experiment...")
     dfres = dispatch(pars)
+
+    # write data
+    println("\nNRSTExp: experiment finished successfully!")
+    print("\tWriting metadata...")
     fn = "NRSTExp_" * string(hash(join(ARGS)), base = 16)
-    if hasproperty(dfres,:error)
-        touch(fn * ".tsv")                              # create empty file to avoid problem in nextflow
-        @warn "$(dfres[1,:error])\nExiting."
-    else
-        # write data
-        println("\nNRSTExp: experiment finished successfully!")
-        print("\tWriting metadata...")
-        open(fn * ".tsv", "w") do io
-            writedlm(io, pars)
-        end
-        print("done!\n\tWriting data...")
-        CSV.write(fn * ".csv.gz", dfres, compress=true) # use gzip compression
-        println("done!\nGood bye!")
+    open(fn * ".tsv", "w") do io
+        writedlm(io, pars)
     end
+    print("done!\n\tWriting data...")
+    CSV.write(fn * ".csv.gz", dfres, compress=true) # use gzip compression
+    println("done!\nGoodbye!")
     return
 end
 

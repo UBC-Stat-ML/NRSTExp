@@ -4,13 +4,14 @@ using NRSTExp.ExamplesGallery
 using SplittableRandoms
 
 # define and tune an NRSTSampler as template
-tm  = XYModel(8)
-rng = SplittableRandom(1040)
+tm  = HierarchicalModel()
+rng = SplittableRandom(2798)
 ns, TE, Λ = NRSTSampler(
     tm,
     rng,
-    maxcor     = 0.9999,
-    γ          = 15.0,
+    use_mean   = false,
+    maxcor     = 0.95,
+    γ          = 10.0,
     xpl_smooth_λ = 0.1,
 );
 res=parallel_run(ns,rng,TE=TE);

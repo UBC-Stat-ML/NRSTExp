@@ -8,12 +8,7 @@ function hyperparams(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
 
     # NRST
     res   = parallel_run(ns, rng, TE=TE)
-    ξ, _  = fit_gpd(res) # check square-integrability of number of visits to the top
-    if isnan(ξ)
-        return insertcols!(df,:error => "hyperparams: too few tours with visits to top level.")
-    elseif ξ >= 0.5
-        return insertcols!(df,:error => "hyperparams: configuration has ξ=$(round(ξ,digits=2))>=0.5 ⟹ Actual TE=0 (estimated TE=$TE).")
-    end
+    ξ, _  = fit_gpd(res)                 # compute tail index of the distribution of number of visits to the top
     
     # get stats
     tlens = tourlengths(res)
@@ -22,12 +17,13 @@ function hyperparams(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
     saveres!(df, "NRST", tlens, nvevs, TE, NRST.get_ntours(res))
 
     # add other metadata
-    N = ns.np.N
-    Λ = sum(NRST.averej(res))
-    insertcols!(df, :N => N)
-    insertcols!(df, :Lambda => Λ)
-    insertcols!(df, :xi => ξ)
-    insertcols!(df, :sum_nexpls => sum(ns.np.nexpls))
+    N     = ns.np.N
+    Λ     = sum(NRST.averej(res))
+    nvtop = res.visits[end,1]+res.visits[end,2]
+    insertcols!(df,
+        :N => N, :Lambda => Λ, :xi => ξ, :n_vis_top => nvtop,
+        :sum_nexpls => sum(ns.np.nexpls)
+    )
 
     return df
 end
