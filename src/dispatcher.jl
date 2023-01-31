@@ -81,9 +81,9 @@ function dispatch(pars::Dict)
     # dispatch experiment
     # should return a dataframe that we can then save as csv
     if exper == "hyperparams"
-        dfres = hyperparams(ns, rng, TE)
+        dfres = hyperparams(ns, rng, TE, Λ)
     elseif exper == "benchmark"
-        dfres = benchmark(ns, rng, TE)
+        dfres = benchmark(ns, rng, TE, Λ)
     else
         throw(ArgumentError("Experiment $exper not yet implemented."))
     end

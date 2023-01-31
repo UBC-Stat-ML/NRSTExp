@@ -3,7 +3,7 @@
 # hyperparameters
 ###############################################################################
 
-function hyperparams(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
+function hyperparams(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat, Λ::AbstractFloat)
     df = DataFrame() # init empty DataFrame
 
     # NRST
@@ -12,13 +12,12 @@ function hyperparams(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat)
     
     # get stats
     tlens = tourlengths(res)
-    nvevs = get_nvevals(res, ns.np.nexpls)
+    nvevs = NRST.get_nvevals.(res.trvec)
     TE    = last(res.toureff)
     saveres!(df, "NRST", tlens, nvevs, TE, NRST.get_ntours(res))
 
     # add other metadata
     N     = ns.np.N
-    Λ     = sum(NRST.averej(res))
     nvtop = res.visits[end,1]+res.visits[end,2]
     insertcols!(df,
         :N => N, :Lambda => Λ, :xi => ξ, :n_vis_top => nvtop,
