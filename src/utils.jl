@@ -4,19 +4,19 @@
 
 get_TE(vNs::AbstractVector) = (sum(vNs) ^ 2) / (length(vNs)*sum(abs2, vNs))
 
-# 
+# common interface for benchmark and hyperparams
 function benchmark_sampler!(
     st::NRST.AbstractSTSampler,
     rng::AbstractRNG,
     df::AbstractDataFrame;
     id::AbstractString,
     TE::AbstractFloat = NaN,
-    ntours_small::Int = -1,
+    ntours_short::Int = -1,
     α::AbstractFloat  = NRST.DEFAULT_α,
     δ::AbstractFloat  = NRST.DEFAULT_δ
     )
-    if isnan(TE)
-        TE = last(parallel_run(st, rng, ntours=ntours_small).toureff)
+    if isnan(TE) # need to estimate it with a short run
+        TE = last(parallel_run(st, rng, ntours=ntours_short).toureff)
     end
     ntours= NRST.min_ntours_TE(TE,α,δ)
     res   = parallel_run(st, rng, ntours=ntours)
