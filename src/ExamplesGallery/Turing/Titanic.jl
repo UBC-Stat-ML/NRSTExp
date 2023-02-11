@@ -1,5 +1,5 @@
 ##############################################################################
-# simple logistic regression with t(3) priors
+# simple logistic regression
 #     σ   ~ Exp(1)     
 #     α   ~ Cauchy(0,σ)
 #     β_j ~ Cauchy(0,σ) iid
