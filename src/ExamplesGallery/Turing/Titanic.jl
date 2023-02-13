@@ -4,7 +4,7 @@
 #     α   ~ Cauchy(0,σ)
 #     β_j ~ Cauchy(0,σ) iid
 #     y_i ~ Bernoulli(logistic(α + <β,x_i>))
-# IDEA 1: center X! The centering matrix is
+# IDEA 1: center X: the centering matrix is
 #   C = 1m^T
 # where m := 1^TX/n is the mean of each column. Then
 #   α1 + Xβ = α1 + [(X-C)+C]β = (α1 + Cβ) + Xcβ
@@ -48,13 +48,18 @@ end
 function Titanic()
     X, y  = titanic_load_data()
     n, p  = size(X)
-    m     = mean(X,dims=1)       # colmeans as 1xp matrix
-    X   .-= m                    # center in place (m is "broadcasted" to nxp)
-    Qf,R  = qr(X)                # decompose Xc = X-m
-    Q     = Matrix(Qf)*sqrt(n-1) # thin and scale
-    Rinv  = inv(R/sqrt(n-1))     # inv and scale
-    Rrows = [copy(r) for r in eachrow(R)]
-    Titanic(Q, Rinv, Rrows, vec(m), y, similar(X,n), similar(X,p), n, p, 2+p, Exponential())
+    m     = mean(X,dims=1)                # colmeans as 1xp matrix
+    X   .-= m                             # center in place (m is "virtually broadcasted" to nxp)
+    Qf,R  = qr(X)                         # decompose Xc = X-m into Q (full) and R
+    s     = sqrt(n-1)                     # scale factor
+    Q     = Matrix(Qf)*s                  # thin and scale to ensure Cov(Q)==I
+    R   ./= s                             # apply inverse scale factor in place
+    Rinv  = inv(R)                        # inv and scale so that X still equals QR
+    Rrows = [copy(r) for r in eachrow(R)] # split R into rows for easier forward simulation of β -> θ(β)
+    Titanic(
+        Q, Rinv, Rrows, vec(m), y, similar(X,n), similar(X,p),
+        n, p, 2+p, Exponential()
+    )
 end
 
 # copy method. keeps everything common except temp storages Qθ and β. 
@@ -92,9 +97,9 @@ function Random.rand!(tm::Titanic{TF}, rng, x) where {TF}
     x[1] = log(σ)
     C    = Cauchy(zero(TF), σ)
     x[2] = rand(rng, C)
-    rand!(rng, C, tm.β)                         # sample β, store in temp storage
+    rand!(rng, C, tm.β)                           # sample β, store in temp storage
     for i in 3:tm.lenx
-        x[i] = dot(tm.Rrows[i], tm.β) # get θ[i]=R[i,:]*β
+        @inbounds x[i] = dot(tm.Rrows[i-2], tm.β) # get θ[j]=R[j,:]*β
     end
     return x
 end
