@@ -7,10 +7,10 @@ using FillArrays: Fill
 using IrrationalConstants: twoπ, log2π, logtwo
 using Lattices: Square, edges
 using LazyArrays
-using LinearAlgebra: I, Diagonal, dot, mul!
+using LinearAlgebra
 using LogExpFunctions: logistic, log1pexp
 using Random
-# using Turing: arraydist, filldist, BernoulliLogit
+using Statistics: mean
 using UnPack: @unpack
 using ..NRSTExp: NRSTExp
 import NRST: NRST, TemperedModel, TuringTemperedModel, V, Vref
@@ -26,10 +26,11 @@ include("Turing/hierarchical_model.jl")
 include("Turing/challenger.jl")
 include("Turing/MRNATransfection.jl")
 include("Turing/Titanic.jl")
+include("Turing/Titanic_no_QR.jl")
 export HierarchicalModel, HierarchicalModelTuring
 export ChalLogistic, ChalLogisticTuring
 export MRNATrans, MRNATransTuring
-export Titanic
+export Titanic, TitanicNoQR
 
 # Physics
 include("Physics/XY_model.jl")
