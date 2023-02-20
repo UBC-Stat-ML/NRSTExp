@@ -36,7 +36,7 @@ struct Titanic{TF<:AbstractFloat, TI<:Int} <: TemperedModel
     Q::Matrix{TF}             # scaled Q in the QR decomposition of X
     Rinv::Matrix{TF}          # inverse of scaled R
     Rrows::Vector{Vector{TF}} # rows of R, used in forward simulation β -> θ
-    m::Vector{TF}             # column means of X
+    Ritm::Vector{TF}          # Rinv' * m, where m is the vector of column means of X
     y::BitVector              # labels
     Qθ::Vector{TF}            # temp storage
     β::Vector{TF}             # temp storage
@@ -54,10 +54,10 @@ function Titanic()
     s     = sqrt(n-1)                     # scale factor
     Q     = Matrix(Qf)*s                  # thin and scale to ensure Cov(Q)==I
     R   ./= s                             # apply inverse scale factor in place
-    Rinv  = inv(R)                        # inv and scale so that X still equals QR
+    Rinv  = inv(R)                        # invert
     Rrows = [copy(r) for r in eachrow(R)] # split R into rows for easier forward simulation of β -> θ(β)
     Titanic(
-        Q, Rinv, Rrows, vec(m), y, similar(X,n), similar(X,p),
+        Q, Rinv, Rrows, Rinv' * vec(m), y, similar(X,n), similar(X,p),
         n, p, 2+p, Exponential()
     )
 end
@@ -66,7 +66,7 @@ end
 # this is needed in order to avoid race conditions when sampling in parallel
 function Base.copy(tm::Titanic)
     Titanic(
-        tm.Q, tm.Rinv, tm.Rrows, tm.m, tm.y, similar(tm.Qθ), similar(tm.β),
+        tm.Q, tm.Rinv, tm.Rrows, tm.Ritm, tm.y, similar(tm.Qθ), similar(tm.β),
         tm.n, tm.p, tm.lenx, tm.E
     )
 end
@@ -76,7 +76,7 @@ function split(tm::Titanic{TF}, x::AbstractVector{TF}) where {TF}
     ( lσ = x[1], α = x[2], θ = view(x, 3:tm.lenx) )
 end
 
-# methods for the prior
+# prior potential. note: this is missing the additive const c=-logabsdet(Rinv)
 function NRST.Vref(tm::Titanic{TF}, x) where {TF}
     lσ, α, θ   = split(tm, x)
     σ          = exp(lσ)
@@ -111,7 +111,7 @@ end
 function NRST.V(tm::Titanic{TF}, x) where {TF}
     _, α, θ = split(tm, x)
     mul!(tm.Qθ, tm.Q, θ)
-    α_c = dot(tm.m, tm.Rinv, θ)                # == m^T * Rinv * θ
+    α_c = dot(tm.Ritm, θ)                      # == m^T * Rinv * θ
     acc = zero(TF)
     for (i, yᵢ) in enumerate(tm.y)
         @inbounds ℓ = α + α_c + tm.Qθ[i]       # == α+Xβ. 2.5 times faster with @inbounds
@@ -126,3 +126,19 @@ end
 #     X   = dta[:,2:end]
 #     return X, y
 # end
+
+# # use the NoQR version together with this identity
+# #   1 = E_p[1] = E_p[q/q] = E_q[p/q] = E_q[exp(c-V_p+V_q)]
+# # to check that adding c would give a normalized Vref for the QR version
+# 
+# using LinearAlgebra, Random
+# tm  = Titanic();
+# tm2 = TitanicNoQR();
+# rng = SplittableRandom(7152)
+# c = first(logabsdet(tm.Rinv))
+# x = similar(tm.β,tm.lenx)
+# rand!(tm,rng,x)
+# NRST.V(tm,x) ≈ NRST.V(tm2,[x[1:2];tm.Rinv*x[3:end]]) # check the bijection leaves V unchanged
+# S = 1_000_000_000
+# lS=log(S)
+# sum(_ -> (rand!(tm2,rng,x); exp(c-NRST.Vref(tm,x)+NRST.Vref(tm2,x)-lS)), 1:S ) # =0.7345778272753167 --> good enough? :/
