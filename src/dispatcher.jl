@@ -30,6 +30,7 @@ function dispatch(pars::Dict)
     maxcor  = parse(Float64, pars["cor"])
     γ       = parse(Float64, pars["gam"])
     usemean = (pars["fun"] == "mean")
+    TXpl    = pars["xpl"] == "SSSO" ? NRST.SliceSamplerSteppingOut : NRST.SliceSamplerDoubling
     xplsmλ  = parse(Float64, pars["xps"])
     rseed   = parse(Int, pars["seed"])
     rng     = SplittableRandom(rseed)
@@ -43,6 +44,7 @@ function dispatch(pars::Dict)
             ns, TE, Λ = NRSTSampler(
                 tm,
                 rng,
+                TXpl,
                 use_mean   = usemean,
                 maxcor     = maxcor,
                 γ          = γ,
@@ -71,6 +73,7 @@ function dispatch(pars::Dict)
         ns, TE, Λ = NRSTSampler(
             tm,
             rng,
+            TXpl,
             use_mean   = usemean,
             maxcor     = maxcor,
             γ          = γ,
