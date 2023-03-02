@@ -27,7 +27,7 @@ GT95Sampler(ns::NRSTSampler) = GT95Sampler(NRST.copyfields(ns)...)
 # communication step
 #######################################
 
-function comm_step(gt::GT95Sampler{T,I,K}, rng::AbstractRNG) where {T,I,K}
+function propose_i(gt::GT95Sampler{T,I,K}, rng::AbstractRNG) where {T,I,K}
     @unpack np,ip,curV = gt
     @unpack N,betas,c = np
     i = ip[1]
@@ -47,17 +47,9 @@ function comm_step(gt::GT95Sampler{T,I,K}, rng::AbstractRNG) where {T,I,K}
     return iprop, nlar
 end
 function NRST.comm_step!(gt::GT95Sampler, rng::AbstractRNG)
-    iprop,nlar = comm_step(gt,rng)
+    iprop,nlar = propose_i(gt,rng)
     (nlar < randexp(rng)) && (gt.ip[1] = iprop)
     return NRST.nlar_2_rp(nlar)
-end
-
-# step = expl_step ∘ comm_step => (X,0) is atom
-# note: if we flip the order then there is no atom!
-function NRST.step!(gt::GT95Sampler, rng::AbstractRNG)
-    xap,nvs = NRST.expl_step!(gt, rng) # returns explorers' acceptance probability and number of V evals
-    rp      = NRST.comm_step!(gt, rng) # returns rejection probability    
-    return rp, xap, nvs
 end
 
 #######################################
@@ -67,17 +59,12 @@ end
 # check if state is in the atom
 NRST.isinatom(gt::GT95Sampler{T,I}) where {T,I} = (gt.ip[1]==zero(I))
 
-# reset state by sampling from the renewal measure (need to override default method)
-# note: if isinatom(gt), renew! is the same as applying step!
-function NRST.renew!(gt::GT95Sampler{T,I}, rng::AbstractRNG) where {T,I}
-    gt.ip[1] = zero(I)
-    NRST.step!(gt, rng)
-    return
-end
+# move state to the atom
+NRST.toatom!(gt::GT95Sampler{T,I}) where {T,I} = (gt.ip[1]=zero(I))
 
 # handling last tour step
 function NRST.save_last_step_tour!(gt::GT95Sampler{T,I,K}, tr; kwargs...) where {T,I,K}
     NRST.save_pre_step!(gt, tr; kwargs...)                   # store state at atom
-    rp = NRST.nlar_2_rp(last(comm_step(gt, RandomDevice()))) # simulate a comm step to get rp. since ip[1]=0, the result is deterministic, so RandomDevice is not actually used 
+    rp = NRST.nlar_2_rp(last(propose_i(gt, TaskLocalRNG()))) # simulate a comm step to get rp. since ip[1]=0, the result is deterministic, so the RNG is not actually used 
     NRST.save_post_step!(gt, tr, rp, K(NaN), one(I))         # the expl step would not use an explorer; thus the NaN. Also, we assume the draw from the reference would succeed, thus using only 1 V(x) eval 
 end

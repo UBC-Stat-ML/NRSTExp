@@ -2,7 +2,7 @@ module CompetingSamplers
 
 using IrrationalConstants: logtwo
 using LogExpFunctions: logsumexp, log1mexp, logaddexp
-using Random: AbstractRNG, RandomDevice, randexp
+using Random: AbstractRNG, TaskLocalRNG, randexp
 using StaticArrays: MVector
 using UnPack: @unpack
 using NRST

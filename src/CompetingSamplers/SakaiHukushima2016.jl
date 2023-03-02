@@ -77,22 +77,19 @@ function NRST.comm_step!(sh::SH16Sampler{T,I,K}, rng::AbstractRNG) where {T,I,K}
     return -expm1(lpm)
 end
 
-# same step! method as NRST
-
 #######################################
 # RegenerativeSampler interface
 #######################################
 
-# same atom as NRST, no need for specialized isinatom method
+# check if state is in the atom
+function NRST.isinatom(sh::SH16Sampler{T,I}) where {T,I}
+    sh.ip[1]==zero(I) && sh.ip[2]==one(I)
+end
 
-# reset state by sampling from the renewal measure
-# Although W_{0,1}^{-}=0 <=> pfail_0^{-} = 1, it is not clear that pfail_0^{+}=0.
-# Therefore, it is not clear that SH16 always flips at (0,-), so safer to have 
-# a specialized renew method
-function NRST.renew!(sh::SH16Sampler{T,I}, rng::AbstractRNG) where {T,I}
+# move state to the atom
+function NRST.toatom!(sh::SH16Sampler{T,I}) where {T,I}
     sh.ip[1] = zero(I)
-    sh.ip[2] = -one(I)
-    NRST.step!(sh, rng)
+    sh.ip[2] = one(I)
 end
 
 # handling last tour step. same as NRST.

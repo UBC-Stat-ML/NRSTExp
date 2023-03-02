@@ -7,7 +7,7 @@ function benchmark(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat, Λ::Abs
     
     # NRST
     benchmark_sampler!(ns,rng,df,id="NRST",TE=TE)
-    ntours_short = max(4096, ceil(Int, df[1,:ntours]/10)) # to estimate TE in other samplers
+    ntours_short = max(2_048, ceil(Int, df[1,:ntours]/10)) # to estimate TE in other samplers
 
     # CompetingSamplers
     ## Simulated Tempering

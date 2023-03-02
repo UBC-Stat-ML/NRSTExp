@@ -1,6 +1,7 @@
 ###############################################################################
 # Implements Faizi et al. (2020) with Irreversible Metropolized-Gibbs sampler.
 # Only the special case δ=1, shown by authors to outperform others
+# adversarial case: MRNATrans seed 40322 γ=2.5 maxcor=0.95 SSSO
 ###############################################################################
 
 # exact same fields as NRSTSampler, plus storage for calculations
@@ -114,7 +115,6 @@ end
 # = log[1 - exp(min{0, lpf_k^{-eps}  - lpf_k^{eps}  }) ]
 # = log1mexp(min{0, lpf_k^{-eps}  - lpf_k^{eps}  })
 
-# same step! method as NRST
 # Note: this must return true
 # update_ms!(fbdr)
 # (last(fbdr.ip) > 0 ? findlast(isinf,fbdr.ms)-1 : findlast(isfinite,fbdr.ms)) == first(fbdr.ip)
@@ -123,15 +123,15 @@ end
 # RegenerativeSampler interface
 #######################################
 
-# same atom as NRST, no need for specialized isinatom method
+# check if state is in the atom
+function NRST.isinatom(fbdr::FBDRSampler{T,I}) where {T,I}
+    fbdr.ip[1]==zero(I) && fbdr.ip[2]==one(I)
+end
 
-# reset state by sampling from the renewal measure
-# not sure if P((0,-1)->(0,1))=1 (experimentally it looks like this is true),
-# so safer to have a specialized method
-function NRST.renew!(fbdr::FBDRSampler{T,I}, rng::AbstractRNG) where {T,I}
+# move state to the atom
+function NRST.toatom!(fbdr::FBDRSampler{T,I}) where {T,I}
     fbdr.ip[1] = zero(I)
-    fbdr.ip[2] = -one(I)
-    NRST.step!(fbdr, rng)
+    fbdr.ip[2] = one(I)
 end
 
 # handling last tour step
