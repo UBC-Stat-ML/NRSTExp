@@ -97,6 +97,6 @@ end
 
 # handling last tour step. same as NRST.
 function NRST.save_last_step_tour!(sh::SH16Sampler{T,I,K}, tr; kwargs...) where {T,I,K}
-    NRST.save_pre_step!(sh, tr; kwargs...)       # store state at atom
-    NRST.save_post_step!(sh, tr, one(K), K(NaN)) # move towards 1 from (0,-) is always rejected. Also, it doesn't use an explorer so NaN.
+    NRST.save_pre_step!(sh, tr; kwargs...)               # store state at atom
+    NRST.save_post_step!(sh, tr, one(K), K(NaN), one(I)) # move towards 1 from (0,-) is always rejected. Also, it doesn't use an explorer so NaN. Finally, we assume the draw from the reference would succeed, thus using only 1 V(x) eval 
 end

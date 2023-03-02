@@ -55,9 +55,9 @@ end
 # step = expl_step ∘ comm_step => (X,0) is atom
 # note: if we flip the order then there is no atom!
 function NRST.step!(gt::GT95Sampler, rng::AbstractRNG)
-    xplap = NRST.expl_step!(gt, rng) # returns explorers' acceptance probability
-    rp    = NRST.comm_step!(gt, rng) # returns rejection probability    
-    return rp, xplap
+    xap,nvs = NRST.expl_step!(gt, rng) # returns explorers' acceptance probability and number of V evals
+    rp      = NRST.comm_step!(gt, rng) # returns rejection probability    
+    return rp, xap, nvs
 end
 
 #######################################
@@ -79,5 +79,5 @@ end
 function NRST.save_last_step_tour!(gt::GT95Sampler{T,I,K}, tr; kwargs...) where {T,I,K}
     NRST.save_pre_step!(gt, tr; kwargs...)                   # store state at atom
     rp = NRST.nlar_2_rp(last(comm_step(gt, RandomDevice()))) # simulate a comm step to get rp. since ip[1]=0, the result is deterministic, so RandomDevice is not actually used 
-    NRST.save_post_step!(gt, tr, rp, K(NaN))                 # the expl step would not use an explorer; thus the NaN.
+    NRST.save_post_step!(gt, tr, rp, K(NaN), one(I))         # the expl step would not use an explorer; thus the NaN. Also, we assume the draw from the reference would succeed, thus using only 1 V(x) eval 
 end

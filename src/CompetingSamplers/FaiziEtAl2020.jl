@@ -136,8 +136,8 @@ end
 
 # handling last tour step
 function NRST.save_last_step_tour!(fbdr::FBDRSampler{T,I,K}, tr; kwargs...) where {T,I,K}
-    NRST.save_pre_step!(fbdr, tr; kwargs...)   # store state at atom
-    update_ms!(fbdr)                           # update IMGS probabilities
-    rp = exp(fbdr.ms[first(fbdr.ip)+1])        # probability of iprop==i <=> prob of rejecting an i move
-    NRST.save_post_step!(fbdr, tr, rp, K(NaN)) # save stats
+    NRST.save_pre_step!(fbdr, tr; kwargs...)           # store state at atom
+    update_ms!(fbdr)                                   # update IMGS probabilities
+    rp = exp(fbdr.ms[first(fbdr.ip)+1])                # probability of iprop==i <=> prob of rejecting an i move
+    NRST.save_post_step!(fbdr, tr, rp, K(NaN), one(I)) # the expl step would not use an explorer; thus the NaN. Also, we assume the draw from the reference would succeed, thus using only 1 V(x) eval 
 end
