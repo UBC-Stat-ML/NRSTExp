@@ -25,9 +25,13 @@ function dispatch()
 end
 
 function dispatch(pars::Dict)
+    nexpl   = -1
     exper   = pars["exp"]
     model   = pars["mod"]
     maxcor  = parse(Float64, pars["cor"])
+    if maxcor >= 1.0                      # hack to pass nexpl instead of maxcor
+        nexpl = round(Int, maxcor)
+    end
     γ       = parse(Float64, pars["gam"])
     usemean = (pars["fun"] == "mean")
     TXpl    = pars["xpl"] == "SSSO" ? NRST.SliceSamplerSteppingOut : NRST.SliceSamplerDoubling
@@ -36,24 +40,8 @@ function dispatch(pars::Dict)
     rng     = SplittableRandom(rseed)
 
     # load model. should at least produce a TemperedModel
-    need_build = true
     if model == "MvNormal"
         tm = MvNormalTM(32,4.,2.)
-        if usemean
-            # do special tuning with exact free_energy
-            ns, TE, Λ = NRSTSampler(
-                tm,
-                rng,
-                TXpl,
-                use_mean   = usemean,
-                maxcor     = maxcor,
-                γ          = γ,
-                xpl_smooth_λ = xplsmλ,
-                do_stage_2 = false
-            )
-	        copyto!(ns.np.c, free_energy(tm, ns.np.betas)) # use exact free energy
-	        need_build = false
-        end
     elseif model == "XYModel"
         tm = XYModel(8)
     elseif model == "HierarchicalModel"
@@ -69,17 +57,16 @@ function dispatch(pars::Dict)
     end
 
     # build and tune sampler
-    if need_build
-        ns, TE, Λ = NRSTSampler(
-            tm,
-            rng,
-            TXpl,
-            use_mean   = usemean,
-            maxcor     = maxcor,
-            γ          = γ,
-            xpl_smooth_λ = xplsmλ
-        )
-    end
+    ns, TE, Λ = NRSTSampler(
+        tm,
+        rng,
+        TXpl,
+        use_mean   = usemean,
+        maxcor     = maxcor,
+        nexpl      = nexpl,
+        γ          = γ,
+        xpl_smooth_λ = xplsmλ
+    )
 
     # dispatch experiment
     # should return a dataframe that we can then save as csv

@@ -5,14 +5,14 @@ using NRSTExp.CompetingSamplers
 using SplittableRandoms
 
 # define and tune an NRSTSampler as template
-tm  = MRNATrans()
+const tm  = MRNATrans()
 rng = SplittableRandom(40322)
 ns, TE, Λ = NRSTSampler(
     tm,
     rng,
     use_mean=true,
     γ=2.5,
-    maxcor=0.95
+    maxcor=2
 );
 
 ###############################################################################
