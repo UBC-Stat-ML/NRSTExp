@@ -10,10 +10,10 @@ rng = SplittableRandom(40322)
 ns, TE, Λ = NRSTSampler(
     tm,
     rng,
-    use_mean=true,
-    γ=2.5,
-    maxcor=2
+    nexpl=3,
+    adapt_nexpls=false
 );
+res=parallel_run(ns,rng,TE=TE);
 
 ###############################################################################
 # example system call
@@ -21,7 +21,7 @@ ns, TE, Λ = NRSTSampler(
 
 # julia --project -t 4 \
 #     -e "using NRSTExp; dispatch()" \
-#     exp=benchmark  \
+#     exp=hyperparams  \
 #     mod=Challenger  \
 #     fun=mean    \
 #     cor=0.95 \

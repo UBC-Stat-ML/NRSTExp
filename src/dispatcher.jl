@@ -65,7 +65,8 @@ function dispatch(pars::Dict)
         maxcor     = maxcor,
         nexpl      = nexpl,
         γ          = γ,
-        xpl_smooth_λ = xplsmλ
+        xpl_smooth_λ = xplsmλ,
+        adapt_nexpls = nexpl < 0
     )
 
     # dispatch experiment
