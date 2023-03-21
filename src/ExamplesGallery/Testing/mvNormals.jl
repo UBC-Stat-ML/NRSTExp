@@ -13,8 +13,8 @@ Base.rand(tm::MvNormalTM, rng) = tm.s0 * randn(rng, tm.d)
 
 # Write methods for the analytical expressions for ``\mu_b``, 
 # ``s_b^2``, and ``\mathcal{F}``
-sbsq(tm,b) = 1/(1/tm.s0sq + b)
-mu(tm,b)   = b*tm.m*sbsq(tm,b)*ones(tm.d)
+sbsq(tm,b) = inv(inv(tm.s0sq) + b) # use sbsq(tm,b) * I to get a diag matrix
+mu(tm,b)   = b * tm.m * sbsq(tm,b) # use it with Fill() to get a lazy vector
 function free_energy(tm::MvNormalTM,b::Real)
     m   = tm.m
     ssq = sbsq(tm, b)
@@ -22,10 +22,11 @@ function free_energy(tm::MvNormalTM,b::Real)
 end
 free_energy(tm::MvNormalTM, bs::AbstractVector{<:Real}) = map(b->free_energy(tm,b), bs)
 
-# Distribution of the scaled potential function
-function get_scaled_V_dist(tm,b)
+# Distribution of the potential function
+function get_V_dist(tm,b)
     s² = sbsq(tm,b)
     s  = sqrt(s²)
     μ  = tm.m*(b*s²-1)/s
-    NoncentralChisq(tm.d,tm.d*μ*μ)
+    scd= NoncentralChisq(tm.d,tm.d*μ*μ)
+    (s²/2)*scd
 end
