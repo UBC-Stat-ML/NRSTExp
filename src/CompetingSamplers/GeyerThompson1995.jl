@@ -57,7 +57,7 @@ end
 #######################################
 
 # check if state is in the atom
-NRST.isinatom(gt::GT95Sampler{T,I}) where {T,I} = (gt.ip[1]==zero(I))
+NRST.isinatom(gt::GT95Sampler{T,I}) where {T,I} = (first(gt.ip)==zero(I))
 
 # move state to the atom
 NRST.toatom!(gt::GT95Sampler{T,I}) where {T,I} = (gt.ip[1]=zero(I))

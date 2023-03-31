@@ -7,13 +7,17 @@ using CSV: CSV
 using NRST
 using ParetoSmooth: ParetoSmooth
 using SplittableRandoms: SplittableRandom
+using Plots
+using Plots.PlotMeasures: px
+using ColorSchemes: seaborn_colorblind
 
-export dispatch
+export dispatch, gen_iproc_plots
 
 include("dispatcher.jl")
 include("utils.jl")
 include("hyperparams.jl")
 include("benchmark.jl")
+include("viz_utils.jl")
 
 # sub-modules
 include("IdealIndexProcesses/IdealIndexProcesses.jl")
