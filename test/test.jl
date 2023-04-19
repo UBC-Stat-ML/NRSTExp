@@ -4,11 +4,14 @@ using NRSTExp.ExamplesGallery
 using SplittableRandoms
 
 # define and tune an NRSTSampler as template
-const tm = MvNormalTM(3,2.,2.); # Λ ≈ 1
-const rng = SplittableRandom(3509)
+const tm = ThresholdLogLogistic();
+const rng = SplittableRandom(1529)
 ns, TE, Λ = NRSTSampler(
     tm,
-    rng
+    rng,
+    # maxcor = 0.95,
+    # adapt_nexpls = true
+    # γ=1.
 );
 
 ###############################################################################

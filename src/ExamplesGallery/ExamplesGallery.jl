@@ -27,10 +27,13 @@ include("Turing/challenger.jl")
 include("Turing/MRNATransfection.jl")
 include("Turing/Titanic.jl")
 include("Turing/Titanic_no_QR.jl")
+include("Turing/ThresholdWeibull.jl")
+include("Turing/ThresholdLogLogistic.jl")
 export HierarchicalModel, HierarchicalModelTuring
 export ChalLogistic, ChalLogisticTuring
 export MRNATrans, MRNATransTuring
 export Titanic, TitanicNoQR
+export ThresholdWeibull, ThresholdLogLogistic
 
 # Physics
 include("Physics/XY_model.jl")

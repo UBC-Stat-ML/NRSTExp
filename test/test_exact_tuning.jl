@@ -1,3 +1,8 @@
+# TODO:
+# 1) convert to test in NRST.jl
+# 2) compare standard Lambda estimator with one that uses derivative (i.e., rho') through a
+#    Hermite interpolator like https://github.com/miguelbiron/MonotonicHermite.jl
+
 using NRST
 using NRSTExp
 using NRSTExp.ExamplesGallery
