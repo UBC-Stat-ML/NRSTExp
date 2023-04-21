@@ -4,15 +4,17 @@ using NRSTExp.ExamplesGallery
 using SplittableRandoms
 
 # define and tune an NRSTSampler as template
-const tm = ThresholdLogLogistic();
+const tm = Funnel();
 const rng = SplittableRandom(1529)
 ns, TE, Λ = NRSTSampler(
     tm,
     rng,
-    # maxcor = 0.95,
-    # adapt_nexpls = true
-    # γ=1.
+    # nexpl  = 3,
+    # maxcor = 0.9,
+    # adapt_nexpls = true,
+    # γ=3.
 );
+res = parallel_run(ns, rng, NRST.NRSTTrace(ns), TE=TE);
 
 ###############################################################################
 # example system call
