@@ -13,10 +13,6 @@
 #    V(x) := sum_{i=2}^d logpdf(N(xi; 0,σ^2)) - logpdf(N(xi; 0,e^β))
 ##############################################################################
 
-#######################################
-# pure julia version
-#######################################
-
 # Define a `TemperedModel` type and implement `NRST.V`, `NRST.Vref`, and `Base.rand` 
 struct Funnel{TF<:AbstractFloat,TI<:Int} <: TemperedModel
     β_dist::Normal{TF}

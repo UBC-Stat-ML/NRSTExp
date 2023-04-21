@@ -52,6 +52,14 @@ function dispatch(pars::Dict)
         tm = MRNATrans()
     elseif model == "Titanic"
         tm = Titanic()
+    elseif model == "Funnel"
+        tm = Funnel()
+    elseif model == "Banana"
+        tm = Banana()
+    elseif model == "ThresholdWeibull"
+        tm = ThresholdWeibull()
+    elseif model == "ThresholdLogLogistic"
+        tm = ThresholdLogLogistic()
     else
         throw(ArgumentError("Model $model not yet implemented."))
     end

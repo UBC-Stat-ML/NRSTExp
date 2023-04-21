@@ -29,13 +29,11 @@ include("Turing/Titanic.jl")
 include("Turing/Titanic_no_QR.jl")
 include("Turing/ThresholdWeibull.jl")
 include("Turing/ThresholdLogLogistic.jl")
-include("Turing/Funnel.jl")
 export HierarchicalModel, HierarchicalModelTuring
 export ChalLogistic, ChalLogisticTuring
 export MRNATrans, MRNATransTuring
 export Titanic, TitanicNoQR
 export ThresholdWeibull, ThresholdLogLogistic
-export Funnel
 
 # Physics
 include("Physics/XY_model.jl")
@@ -44,7 +42,11 @@ export XYModel
 # Testing
 include("Testing/mvNormals.jl") # example with multivariate Normals admitting closed form expressions
 include("Testing/HalfCauchyEnergy.jl")
+include("Testing/Funnel.jl")
+include("Testing/Banana.jl")
 export MvNormalTM, free_energy, get_scaled_V_dist
 export HalfCauchyEnergy
+export Funnel
+export Banana
 
 end
