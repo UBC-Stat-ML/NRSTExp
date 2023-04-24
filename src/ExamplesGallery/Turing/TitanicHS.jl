@@ -25,36 +25,31 @@ function Base.copy(tm::TitanicHS)
     TitanicHS(tm.X, tm.y, similar(tm.X, tm.n), tm.n, tm.p, tm.lenx, tm.H, tm.T)
 end
 
-# invtrans: only splits, does not transform to avoid alloc
 function invtrans(tm::TitanicHS{TF}, x::AbstractVector{TF}) where {TF}
     p = tm.p
-    ( lτ = x[1], α = x[2], lλ = view(x, 3:(p+2)), β = view(x, (p+3):tm.lenx) )
+    ( τ = x[1], α = x[2], λ = view(x, 3:(p+2)), β = view(x, (p+3):tm.lenx) )
 end
 
 # methods for the prior
 function NRST.Vref(tm::TitanicHS{TF}, x) where {TF}
-    lτ, α, lλ, β = invtrans(tm, x)
-    τ    = exp(lτ)
+    τ, α, λ, β = invtrans(tm, x)
     acc  = zero(TF)
     isinf(acc -= logpdf(tm.H, τ)) && return acc
-    acc -= lτ                                        # logabsdetjac
     isinf(acc -= logpdf(tm.T, α)) && return acc
-    for (i, lλᵢ) in enumerate(lλ)
-        λᵢ   = exp(lλᵢ)                              # exp on the fly to avoid alloc
+    for (i, λᵢ) in enumerate(λ)
         isinf(acc -= logpdf(tm.H, λᵢ)) && return acc
-        acc -= lλᵢ                                   # logabsdetjac                      
         isinf(acc -= logpdf(Normal(zero(TF), λᵢ*τ), β[i])) && return acc
     end
     return acc
 end
 function Random.rand!(tm::TitanicHS{TF}, rng, x) where {TF}
     τ    = rand(rng, tm.H)
-    x[1] = log(τ)
+    x[1] = τ
     x[2] = rand(rng, tm.T)
     p    = tm.p
     for i in 3:(p+2)
         λᵢ     = rand(rng, tm.H)
-        x[i]   = log(λᵢ)
+        x[i]   = λᵢ
         x[i+p] = rand(rng, Normal(zero(TF), λᵢ*τ))
     end
     return x
@@ -81,6 +76,13 @@ function titanic_load_data()
     X   = dta[:,2:end]
     return X, y
 end
+
+# using StatsPlots, ColorSchemes
+
+# ncovs = 2
+# idxs = [1:2;3:(3+ncovs-1);(tm.p+3):(tm.p+3+ncovs-1)] 
+# X = collect(hcat((xs[idxs] for xs in res.xarray[end])...)')
+# cornerplot(X, smooth=false,compact=true, formatter=:plain, size = (800,800), markercolor = cgrad(ColorSchemes.Purples_5))
 
 #######################################
 # turing version

@@ -50,8 +50,8 @@ function dispatch(pars::Dict)
         tm = ChalLogistic()
     elseif model == "MRNATrans"
         tm = MRNATrans()
-    elseif model == "Titanic"
-        tm = Titanic()
+    elseif model == "TitanicHS"
+        tm = TitanicHS()
     elseif model == "Funnel"
         tm = Funnel()
     elseif model == "Banana"

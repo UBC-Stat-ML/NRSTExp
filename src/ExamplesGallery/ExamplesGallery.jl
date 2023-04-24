@@ -25,14 +25,15 @@ export HalfCauchy
 include("Turing/hierarchical_model.jl")
 include("Turing/challenger.jl")
 include("Turing/MRNATransfection.jl")
-include("Turing/Titanic.jl")
-include("Turing/Titanic_no_QR.jl")
+# include("Turing/Titanic.jl")
+# include("Turing/Titanic_no_QR.jl")
+include("Turing/TitanicHS.jl")
 include("Turing/ThresholdWeibull.jl")
 include("Turing/ThresholdLogLogistic.jl")
 export HierarchicalModel, HierarchicalModelTuring
 export ChalLogistic, ChalLogisticTuring
 export MRNATrans, MRNATransTuring
-export Titanic, TitanicNoQR
+export Titanic, TitanicNoQR, TitanicHS
 export ThresholdWeibull, ThresholdLogLogistic
 
 # Physics
