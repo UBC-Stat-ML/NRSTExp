@@ -4,13 +4,13 @@ using NRSTExp.ExamplesGallery
 using SplittableRandoms
 
 # define and tune an NRSTSampler as template
-tm = Banana();
-rng = SplittableRandom(2911)
+tm = Funnel();
+rng = SplittableRandom(5427)
 ns, TE, Λ = NRSTSampler(
     tm,
     rng,
     # use_mean = false,
-    γ = 4.,
+    γ = 2.,
     # nexpl  = 10,
     maxcor = 0.95,
     adapt_nexpls = true,
