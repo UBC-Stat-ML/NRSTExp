@@ -1,10 +1,34 @@
 using NRST
 using NRSTExp
+using NRSTExp.CompetingSamplers
 using NRSTExp.ExamplesGallery
 using SplittableRandoms
 
 # define and tune an NRSTSampler as template
-tm = Funnel();
+tm        = MvNormalTM(3,2.,2.);
+rng       = SplittableRandom(5427)
+ns, TE, Λ = NRSTSampler(
+    tm,
+    rng,
+    γ = 2.,
+    maxcor = 0.95,
+    adapt_nexpls = true,
+);
+oldc = copy(ns.np.c)
+fbdr = FBDRSampler(ns);
+NRST.tune!(fbdr, rng, 2^14);
+fbdr.np.c
+
+ns.np.c
+###############################################################################
+
+using NRST
+using NRSTExp
+using NRSTExp.ExamplesGallery
+using SplittableRandoms
+
+# define and tune an NRSTSampler as template
+tm = ThresholdWeibull();
 rng = SplittableRandom(5427)
 ns, TE, Λ = NRSTSampler(
     tm,
@@ -17,6 +41,8 @@ ns, TE, Λ = NRSTSampler(
     # max_rounds=18
 );
 res = parallel_run(ns, rng, NRST.NRSTTrace(ns), TE=TE);
+
+
 
 # TODO: convert this into a viz method in NRSTExp
 # using Plots, ColorSchemes
@@ -52,11 +78,11 @@ res = parallel_run(ns, rng, NRST.NRSTTrace(ns), TE=TE);
 
 # julia --project -t 4 \
 #     -e "using NRSTExp; dispatch()" \
-#     exp=hyperparams  \
-#     mod=ThresholdWeibull  \
-#     fun=median    \
+#     exp=benchmark  \
+#     mod=TitanicHS  \
+#     fun=mean    \
 #     cor=0.95 \
-#     gam=11  \
+#     gam=2  \
 #     xpl=SSSO \
 #     xps=1e-5 \
 #     seed=1111

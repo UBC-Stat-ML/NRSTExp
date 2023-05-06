@@ -1,3 +1,8 @@
+# rewrite a grid with uniform points
+function uniformize!(bs::Vector{TF}) where {TF<:Real} 
+    copyto!(bs, range(zero(TF), one(TF), length(bs)))
+end
+
 # sample from log-probs
 # adapted from StatsBase method: https://github.com/JuliaStats/StatsBase.jl/blob/bd4ca61f4bb75f2c6cd0a47aee1cfde7b696eb9c/src/sampling.jl#L552
 # when we have ps = exp.(lps), then sampling does 

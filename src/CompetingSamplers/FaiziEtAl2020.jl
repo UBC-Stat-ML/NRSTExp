@@ -141,3 +141,50 @@ function NRST.save_last_step_tour!(fbdr::FBDRSampler{T,I,K}, tr; kwargs...) wher
     rp = exp(fbdr.ms[first(fbdr.ip)+1])                # probability of iprop==i <=> prob of rejecting an i move
     NRST.save_post_step!(fbdr, tr, rp, K(NaN), one(I)) # the expl step would not use an explorer; thus the NaN. Also, we assume the draw from the reference would succeed, thus using only 1 V(x) eval 
 end
+
+###############################################################################
+# Tuning strategy for FBDRSampler == equi-spaced grid + Park&Pande 2007 for c
+# tldr of PP2007: 
+# 1) sequentially sample with the explorer all the temperatures, so that last 
+#    state of prev temp is first state in new temp. collect mean energy
+# 2) use trapezoidal approx of the thermodynamical identity to estimate logZs
+###############################################################################
+
+function NRST.tune!(
+    fbdr::FBDRSampler{T,TI,TF},
+    rng::AbstractRNG,
+    nsteps::Int
+    ) where {T,TI<:Int,TF<:AbstractFloat}
+    # tune grid
+    uniformize!(fbdr.np.betas)                         # uses equidistant grid
+    
+    # tune the affinities
+    np  = fbdr.np
+    N   = np.N
+    nvs = zero(TI)
+    c   = np.c
+    vs  = similar(c, nsteps)                           # storage for V values
+
+    # sample from the reference
+    for n in eachindex(vs)
+        nvs  += NRST.refreshx!(fbdr, rng)              # note: fbdr.ip is not changed here, only .x and .curV
+
+        vs[n] = fbdr.curV[]
+    end
+    mv = mean(vs)
+
+    # sample sequentially from the rest of the temperatures
+    # note: fbdr.ip is not changed here, only .x and .curV
+    xpl = fbdr.xpl
+    δβ  = inv(N)
+    for i in 1:N
+        β       = np.betas[i+1]                        # get the β for the level
+        params  = np.xplpars[i]                        # get explorer params for this level 
+        NRST.explore!(xpl, rng, β, params, zero(TI))   # use existing machinery to set params
+        NRST.run!(xpl, rng, vs)                        # run the explorer, writing V to vs
+        newmv   = mean(vs)                             # compute mean
+        c[i+1]  = c[i] + δβ*(mv + newmv)/2             # trapezoidal approx increment
+        mv      = newmv
+    end
+end
+
