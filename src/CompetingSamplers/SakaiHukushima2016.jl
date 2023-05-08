@@ -97,3 +97,63 @@ function NRST.save_last_step_tour!(sh::SH16Sampler{T,I,K}, tr; kwargs...) where 
     NRST.save_pre_step!(sh, tr; kwargs...)               # store state at atom
     NRST.save_post_step!(sh, tr, one(K), K(NaN), one(I)) # move towards 1 from (0,-) is always rejected. Also, it doesn't use an explorer so NaN. Finally, we assume the draw from the reference would succeed, thus using only 1 V(x) eval 
 end
+
+###############################################################################
+# Tuning for SH16Sampler from Sakai & Hukushima (2016b)
+# Note: for each i∈{0..N}, let mv_{i+1} the running mean at level i. Then
+#     c_i     = c_{i+1} + δβ[mv_i + mv_{i+1}]/2
+#     c_{i+1} = c_{i+2} + δβ[mv_{i+1} + mv_{i+2}]/2
+# So, when level is i<N, the updated mv_{i+1} can be used to update two c's,
+# This is how I interpret the phrase in point (d)
+#     > Continue the IST simulation, calculate Ē1 and Ē2, and 
+#     > update g2 and g3 after every (n) MCS.
+# This is obviously wrong on its face since you can only update mv_{i+1} (you 
+# only see one i at each step), but you *can* update two (contiguous) cs.
+###############################################################################
+
+function NRST.tune!(
+    sh::SH16Sampler{T,TI,TF},
+    rng::AbstractRNG;
+    max_steps::Int = 10000,
+    correct::Bool = false,
+    xv_init = nothing
+    ) where {T,TI<:Int,TF<:AbstractFloat}
+    # tune grid
+    np  = sh.np
+    uniformize!(np.betas)                                  # uses equidistant grid
+    
+    # tune the affinities
+    N   = np.N
+    hδβ = inv(N)/2                                         # half δβ == (beta-beta')/2
+    c   = np.c
+    fill!(c, zero(TF))                                     # init c
+    mvs = [Mean(TF) for _ in 0:N]                          # init N+1 OnlineStats Mean accumulators for mean Vs
+    sh.ip[begin] = N                                       # start simulation from the coldest level == largest beta
+    sh.ip[end] = rand(rng, Bool) ? one(TI) : -one(TI)      # select random eps
+    if isnothing(xv_init)
+        NRST.refreshx!(sh, rng)                            # select random x
+    else
+        copyto!(sh.x, first(xv_init))
+        sh.curV[] = last(xv_init)
+    end
+
+    # on-the-fly weight determination loop
+    for _ in 1:max_steps
+        _, _ , nvs = NRST.step!(sh, rng)
+        i   = first(sh.ip)
+        ip1 = i+1
+        ip2 = i+2
+        fit!(mvs[ip1], -sh.curV[])                         # update running mean of -V at i
+        EV1 = value(mvs[ip1])                              # extract the updated value
+        if i==N
+            c[N] = hδβ*EV1                                 # special update, implicitly assumes c[N+1] = -mv_N*db/2
+        else
+            i == N-1 && correct && (c[end] = -hδβ*EV1)     # this makes the update for i==N valid but it is not in the paper
+            c[ip1] = c[ip2] + hδβ*(value(mvs[ip2]) + EV1)
+            if i > zero(TI)
+                c[i] = c[ip1] + hδβ*(value(mvs[i]) + EV1)
+            end
+        end
+    end
+end
+

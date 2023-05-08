@@ -168,7 +168,6 @@ function NRST.tune!(
     # sample from the reference
     for n in eachindex(vs)
         nvs  += NRST.refreshx!(fbdr, rng)              # note: fbdr.ip is not changed here, only .x and .curV
-
         vs[n] = fbdr.curV[]
     end
     mv = mean(vs)

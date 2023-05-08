@@ -5,7 +5,7 @@ using NRSTExp.ExamplesGallery
 using SplittableRandoms
 
 # define and tune an NRSTSampler as template
-tm        = MvNormalTM(3,2.,2.);
+tm        = ChalLogistic();#MvNormalTM(3,2.,2.);
 rng       = SplittableRandom(5427)
 ns, TE, Λ = NRSTSampler(
     tm,
@@ -14,12 +14,25 @@ ns, TE, Λ = NRSTSampler(
     maxcor = 0.95,
     adapt_nexpls = true,
 );
-oldc = copy(ns.np.c)
-fbdr = FBDRSampler(ns);
-NRST.tune!(fbdr, rng, 2^14);
-fbdr.np.c
+res = parallel_run(ns, rng, NRST.NRSTTrace(ns), TE = TE);
+vmin,imin = findmin(res.trVs[end])
+xmin = res.xarray[end][imin]
 
-ns.np.c
+using CubicSplines, Plots
+cfun = CubicSpline(ns.np.betas, ns.np.c)
+sh = SH16Sampler(ns);
+f0=0.#free_energy(tm,0)
+plot(b -> cfun(b), 0, 1, label="true", linecolor=:black)
+#plot(b -> free_energy(tm,b), 0, 1, label="true")
+# plot!(b -> cfun(b)+f0, 0, 1, label="NRST")
+NRST.tune!(sh, rng, max_steps=100000, xv_init = (xmin,vmin));
+plot!(sh.np.betas, sh.np.c .+ (f0-sh.np.c[begin]), label="SH16", linecolor=:yellow)
+NRST.tune!(sh, rng, max_steps=100000, correct=true, xv_init = (xmin,vmin));
+plot!(sh.np.betas, sh.np.c .+ (f0-sh.np.c[begin]), label="SH16 (c)", linecolor=:blue)
+
+
+res = parallel_run(ns, rng, ntours = 20);
+
 ###############################################################################
 
 using NRST

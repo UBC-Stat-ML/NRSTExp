@@ -2,6 +2,7 @@ module CompetingSamplers
 
 using IrrationalConstants: logtwo
 using LogExpFunctions: logsumexp, log1mexp, logaddexp
+using OnlineStats: Mean, fit!, value, nobs
 using Random: AbstractRNG, TaskLocalRNG, randexp
 using Statistics: mean
 using StaticArrays: MVector
