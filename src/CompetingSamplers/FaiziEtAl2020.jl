@@ -152,38 +152,43 @@ end
 
 function NRST.tune!(
     fbdr::FBDRSampler{T,TI,TF},
-    rng::AbstractRNG,
-    nsteps::Int
+    rng::AbstractRNG;
+    nsteps::Int = 10_000
     ) where {T,TI<:Int,TF<:AbstractFloat}
     # tune grid
-    uniformize!(fbdr.np.betas)                         # uses equidistant grid
+    np  = fbdr.np
+    uniformize!(np.betas)                              # uses equidistant grid
     
     # tune the affinities
-    np  = fbdr.np
     N   = np.N
     nvs = zero(TI)
     c   = np.c
+    fill!(c, zero(TF))                                 # init c
     vs  = similar(c, nsteps)                           # storage for V values
 
-    # sample from the reference
-    for n in eachindex(vs)
-        nvs  += NRST.refreshx!(fbdr, rng)              # note: fbdr.ip is not changed here, only .x and .curV
-        vs[n] = fbdr.curV[]
-    end
-    mv = mean(vs)
-
-    # sample sequentially from the rest of the temperatures
+    # sample sequentially from coldest to hottest temperature
     # note: fbdr.ip is not changed here, only .x and .curV
     xpl = fbdr.xpl
     hδβ = inv(N)/2
-    for i in 1:N
+    mv  = zero(TF)
+    for i in N:-1:1
         β       = np.betas[i+1]                        # get the β for the level
         params  = np.xplpars[i]                        # get explorer params for this level 
         NRST.explore!(xpl, rng, β, params, zero(TI))   # use existing machinery to set params
         NRST.run!(xpl, rng, vs)                        # run the explorer, writing V to vs
         newmv   = mean(vs)                             # compute mean
-        c[i+1]  = c[i] + hδβ*(mv + newmv)              # trapezoidal approx increment
+        i<N && (c[i+1] = c[i+2] - hδβ*(mv + newmv))    # trapezoidal approx increment. uses "-" bc we are integrating backwards
         mv      = newmv
     end
+
+    # sample from the reference
+    newmv = zero(TF)
+    for _ in eachindex(vs)
+        nvs   += NRST.refreshx!(fbdr, rng)             # note: fbdr.ip is not changed here, only .x and .curV
+        newmv += fbdr.curV[]
+    end
+    newmv = newmv/nsteps
+    c[1]  = c[2] - hδβ*(mv + newmv)
+    return
 end
 

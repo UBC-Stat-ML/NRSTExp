@@ -120,6 +120,7 @@ function NRST.tune!(
     correct::Bool = false,
     xv_init = nothing,
     min_visits::Int = 1,                                   # min number of visits to i=0
+    zero_c::Bool = true
     ) where {T,TI<:Int,TF<:AbstractFloat}
     # tune grid
     np = sh.np
@@ -129,7 +130,7 @@ function NRST.tune!(
     N   = np.N
     hδβ = inv(N)/2                                         # half δβ == (beta-beta')/2
     c   = np.c
-    fill!(c, zero(TF))                                     # init c
+    zero_c && (fill!(c, zero(TF)))                         # init c
     mvs = [Mean(TF) for _ in 0:N]                          # init N+1 OnlineStats Mean accumulators for mean Vs
     sh.ip[begin] = N                                       # start simulation from the coldest level == largest beta
     sh.ip[end] = rand(rng, Bool) ? one(TI) : -one(TI)      # select random eps
