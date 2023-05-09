@@ -175,14 +175,14 @@ function NRST.tune!(
     # sample sequentially from the rest of the temperatures
     # note: fbdr.ip is not changed here, only .x and .curV
     xpl = fbdr.xpl
-    δβ  = inv(N)
+    hδβ = inv(N)/2
     for i in 1:N
         β       = np.betas[i+1]                        # get the β for the level
         params  = np.xplpars[i]                        # get explorer params for this level 
         NRST.explore!(xpl, rng, β, params, zero(TI))   # use existing machinery to set params
         NRST.run!(xpl, rng, vs)                        # run the explorer, writing V to vs
         newmv   = mean(vs)                             # compute mean
-        c[i+1]  = c[i] + δβ*(mv + newmv)/2             # trapezoidal approx increment
+        c[i+1]  = c[i] + hδβ*(mv + newmv)              # trapezoidal approx increment
         mv      = newmv
     end
 end

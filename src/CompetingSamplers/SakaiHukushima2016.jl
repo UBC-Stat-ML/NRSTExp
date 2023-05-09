@@ -114,13 +114,16 @@ end
 function NRST.tune!(
     sh::SH16Sampler{T,TI,TF},
     rng::AbstractRNG;
-    max_steps::Int = 10000,
+    betas::AbstractVector = range(zero(TF), one(TF), sh.np.N+1), # uses equidistant grid by default
+    min_steps::Int = 0,
+    max_steps::Int = 1_000_000,
     correct::Bool = false,
-    xv_init = nothing
+    xv_init = nothing,
+    min_visits::Int = 1,                                   # min number of visits to i=0
     ) where {T,TI<:Int,TF<:AbstractFloat}
     # tune grid
-    np  = sh.np
-    uniformize!(np.betas)                                  # uses equidistant grid
+    np = sh.np
+    copyto!(np.betas, betas)
     
     # tune the affinities
     N   = np.N
@@ -138,11 +141,15 @@ function NRST.tune!(
     end
 
     # on-the-fly weight determination loop
-    for _ in 1:max_steps
+    n   = 0
+    nv0 = 0
+    while n < max_steps && (nv0 < min_visits || n < min_steps)
+        n += 1
         _, _ , nvs = NRST.step!(sh, rng)
         i   = first(sh.ip)
         ip1 = i+1
         ip2 = i+2
+        i == zero(TI) && (nv0 += 1; println("Step $n: nv0=$(nv0)."))
         fit!(mvs[ip1], -sh.curV[])                         # update running mean of -V at i
         EV1 = value(mvs[ip1])                              # extract the updated value
         if i==N
