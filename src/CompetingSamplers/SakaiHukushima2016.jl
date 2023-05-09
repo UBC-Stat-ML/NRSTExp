@@ -114,13 +114,13 @@ end
 function NRST.tune!(
     sh::SH16Sampler{T,TI,TF},
     rng::AbstractRNG;
-    betas::AbstractVector = range(zero(TF), one(TF), sh.np.N+1), # uses equidistant grid by default
     min_steps::Int = 0,
     max_steps::Int = 1_000_000,
     correct::Bool = false,
     xv_init = nothing,
     min_visits::Int = 1,                                   # min number of visits to i=0
-    zero_c::Bool = true
+    zero_c::Bool = true,
+    betas::AbstractVector = range(zero(TF), one(TF), sh.np.N+1) # uniform by default 
     ) where {T,TI<:Int,TF<:AbstractFloat}
     # tune grid
     np = sh.np
@@ -128,7 +128,6 @@ function NRST.tune!(
     
     # tune the affinities
     N   = np.N
-    hδβ = inv(N)/2                                         # half δβ == (beta-beta')/2
     c   = np.c
     zero_c && (fill!(c, zero(TF)))                         # init c
     mvs = [Mean(TF) for _ in 0:N]                          # init N+1 OnlineStats Mean accumulators for mean Vs
@@ -154,8 +153,9 @@ function NRST.tune!(
         fit!(mvs[ip1], -sh.curV[])                         # update running mean of -V at i
         EV1 = value(mvs[ip1])                              # extract the updated value
         if i==N
-            c[N] = hδβ*EV1                                 # special update, implicitly assumes c[N+1] = -mv_N*db/2
+            c[N] = (betas[ip1]-betas[i])*EV1               # special update, implicitly assumes c[N+1] = -mv_N*db/2
         else
+            hδβ  = (betas[i+2] - betas[i+1])/2
             i == N-1 && correct && (c[end] = -hδβ*EV1)     # this makes the update for i==N valid but it is not in the paper
             c[ip1] = c[ip2] + hδβ*(value(mvs[ip2]) + EV1)
             if i > zero(TI)

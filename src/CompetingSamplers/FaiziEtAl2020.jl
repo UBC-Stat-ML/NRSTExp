@@ -153,12 +153,13 @@ end
 function NRST.tune!(
     fbdr::FBDRSampler{T,TI,TF},
     rng::AbstractRNG;
-    nsteps::Int = 10_000
+    nsteps::Int = 2^10,
+    betas::AbstractVector = range(zero(TF), one(TF), fbdr.np.N+1) # uniform by default 
     ) where {T,TI<:Int,TF<:AbstractFloat}
-    # tune grid
+    # set grid
     np  = fbdr.np
-    uniformize!(np.betas)                              # uses equidistant grid
-    
+    copyto!(np.betas, betas)
+
     # tune the affinities
     N   = np.N
     nvs = zero(TI)
@@ -169,16 +170,19 @@ function NRST.tune!(
     # sample sequentially from coldest to hottest temperature
     # note: fbdr.ip is not changed here, only .x and .curV
     xpl = fbdr.xpl
-    hδβ = inv(N)/2
-    mv  = zero(TF)
+    mv = βpre = zero(TF)
     for i in N:-1:1
         β       = np.betas[i+1]                        # get the β for the level
         params  = np.xplpars[i]                        # get explorer params for this level 
         NRST.explore!(xpl, rng, β, params, zero(TI))   # use existing machinery to set params
         NRST.run!(xpl, rng, vs)                        # run the explorer, writing V to vs
         newmv   = mean(vs)                             # compute mean
-        i<N && (c[i+1] = c[i+2] - hδβ*(mv + newmv))    # trapezoidal approx increment. uses "-" bc we are integrating backwards
-        mv      = newmv
+        if i<N
+            hδβ    = (β-βpre)/2
+            c[i+1] = c[i+2] + hδβ*(mv + newmv)         # trapezoidal approx increment
+        end    
+        mv   = newmv
+        βpre = β
     end
 
     # sample from the reference
@@ -188,7 +192,7 @@ function NRST.tune!(
         newmv += fbdr.curV[]
     end
     newmv = newmv/nsteps
-    c[1]  = c[2] - hδβ*(mv + newmv)
+    c[1]  = c[2] - βpre*(mv + newmv)
     return
 end
 

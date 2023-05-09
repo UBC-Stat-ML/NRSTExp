@@ -4,8 +4,10 @@ using NRSTExp.CompetingSamplers
 using NRSTExp.ExamplesGallery
 using SplittableRandoms
 
+using CubicSplines, Plots, ColorSchemes
+
 # define and tune an NRSTSampler as template
-tm        = XYModel(3);# ChalLogistic();#MvNormalTM(3,2.,2.);
+tm        = Banana();#XYModel(3);#ChalLogistic();#MvNormalTM(3,2.,2.);
 rng       = SplittableRandom(9406)
 ns, TE, Λ = NRSTSampler(
     tm,
@@ -14,30 +16,20 @@ ns, TE, Λ = NRSTSampler(
     maxcor = 0.95,
     adapt_nexpls = true,
 );
+cfun    = CubicSpline(ns.np.betas, ns.np.c);
 
-using CubicSplines, Plots
-cfun = CubicSpline(ns.np.betas, ns.np.c)
-st = FBDRSampler(NRSTSampler(
-    tm,
-    rng,
-    N = 32,
-    tune=false,
-    nexpl=1
-)[1]);
+N       = 512
+ns_temp = NRSTSampler(tm,rng,N = N,tune=false,nexpl=1)[1]; # template sampler
+sh      = SH16Sampler(ns_temp);
+fbdr    = FBDRSampler(ns_temp);
+plot(b -> cfun(b), 0, 1, label="NRST", palette=:tol_light)
+betas = [0.;10. .^ range(-16,0,N)]
+NRST.tune!(sh, rng, betas=betas, min_visits=32);
+plot!(sh.np.betas, sh.np.c .- sh.np.c[begin], label="SH16")
+NRST.tune!(fbdr, rng, betas=betas);
+plot!(fbdr.np.betas, fbdr.np.c .- fbdr.np.c[begin], label="FBDR")
+title!(string(typeof(tm).name.wrapper) * " (N = $(sh.np.N))")
 
-f0=0.#free_energy(tm,0)
-plot(b -> cfun(b), 0, 1, label="NRST", linecolor=:black)
-#plot(b -> free_energy(tm,b), 0, 1, label="true")
-# plot!(b -> cfun(b)+f0, 0, 1, label="NRST")
-NRST.tune!(st, rng, nsteps=10000);# xv_init = (xmin,vmin));
-plot!(st.np.betas, st.np.c .+ (f0-st.np.c[begin]), label="SH16", linecolor=:yellow)
-# NRST.tune!(st, rng, max_steps=10^5, correct=true)#, xv_init = (xmin,vmin));
-# plot!(st.np.betas, st.np.c .+ (f0-st.np.c[begin]), label="SH16 (c)", linecolor=:blue)
-
-
-res = parallel_run(st, rng, ntours = 2^8);
-res = parallel_run(st, rng, TE = res.toureff[end]);
-sum(NRST.get_nvevals, res.trvec)
 ###############################################################################
 
 using NRST
