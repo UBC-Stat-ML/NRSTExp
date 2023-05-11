@@ -1,39 +1,5 @@
 using NRST
 using NRSTExp
-using NRSTExp.CompetingSamplers
-using NRSTExp.ExamplesGallery
-using SplittableRandoms
-
-using CubicSplines, Plots, ColorSchemes
-
-# define and tune an NRSTSampler as template
-tm        = Banana();#XYModel(3);#ChalLogistic();#MvNormalTM(3,2.,2.);
-rng       = SplittableRandom(9406)
-ns, TE, Λ = NRSTSampler(
-    tm,
-    rng,
-    γ = 2.,
-    maxcor = 0.95,
-    adapt_nexpls = true,
-);
-cfun    = CubicSpline(ns.np.betas, ns.np.c);
-
-N       = 512
-ns_temp = NRSTSampler(tm,rng,N = N,tune=false,nexpl=1)[1]; # template sampler
-sh      = SH16Sampler(ns_temp);
-fbdr    = FBDRSampler(ns_temp);
-plot(b -> cfun(b), 0, 1, label="NRST", palette=:tol_light)
-betas = [0.;10. .^ range(-16,0,N)]
-NRST.tune!(sh, rng, betas=betas, min_visits=32);
-plot!(sh.np.betas, sh.np.c .- sh.np.c[begin], label="SH16")
-NRST.tune!(fbdr, rng, betas=betas);
-plot!(fbdr.np.betas, fbdr.np.c .- fbdr.np.c[begin], label="FBDR")
-title!(string(typeof(tm).name.wrapper) * " (N = $(sh.np.N))")
-
-###############################################################################
-
-using NRST
-using NRSTExp
 using NRSTExp.ExamplesGallery
 using SplittableRandoms
 

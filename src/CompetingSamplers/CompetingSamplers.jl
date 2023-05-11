@@ -1,9 +1,11 @@
 module CompetingSamplers
 
+using CubicSplines: CubicSpline
 using IrrationalConstants: logtwo
 using LogExpFunctions: logsumexp, log1mexp, logaddexp
 using OnlineStats: Mean, fit!, value, nobs
 using Random: AbstractRNG, TaskLocalRNG, randexp
+using SearchSortedNearest: searchsortedprevious, searchsortednext
 using Statistics: mean
 using StaticArrays: MVector
 using UnPack: @unpack
