@@ -15,14 +15,14 @@ struct FBDRSampler{T,I<:Int,K<:AbstractFloat,TXp<:NRST.ExplorationKernel,TProb<:
     ms::Vector{K}          # storage for the log of the Irreversible Metropolized Gibbs conditionals, length N+1 (eq 31, formula for j neq i)
 end
 
-# constructor: copy key fields of an existing (usually pre-tuned) NRSTSampler
-function FBDRSampler(ns::NRSTSampler)
-    FBDRSampler(NRST.copyfields(ns)...,similar(ns.np.c),similar(ns.np.c))
+# constructor: copy key fields of an existing (usually pre-tuned) AbstractSTSampler
+function FBDRSampler(st::NRST.AbstractSTSampler)
+    FBDRSampler(NRST.copyfields(st)..., similar(st.np.c), similar(st.np.c))
 end
 
 # specialized copy method to deal with extra storage fields
 function Base.copy(fbdr::TS) where {TS <: FBDRSampler} 
-    TS(NRST.copyfields(fbdr)...,similar(fbdr.np.c),similar(fbdr.np.c))
+    TS(NRST.copyfields(fbdr)..., similar(fbdr.np.c), similar(fbdr.np.c))
 end
 
 ###############################################################################
@@ -153,15 +153,20 @@ end
 function NRST.tune!(
     fbdr::FBDRSampler{T,TI,TF},
     rng::AbstractRNG;
-    nsteps::Int = 2^10,
-    betas::AbstractVector = range(zero(TF), one(TF), fbdr.np.N+1) # uniform by default 
+    nsteps::Int = 2^12,
+    log_grid::Bool = false,
+    max_v = inv(eps(TF))
     ) where {T,TI<:Int,TF<:AbstractFloat}
     # set grid
-    np  = fbdr.np
-    copyto!(np.betas, betas)
+    np = fbdr.np
+    N  = np.N
+    copyto!(
+        np.betas, log_grid ? 
+            [zero(TF); 2. .^ range(-55,0,N)] :
+            range(zero(TF), one(TF), N+1)
+    )
 
     # tune the affinities
-    N   = np.N
     nvs = zero(TI)
     c   = np.c
     fill!(c, zero(TF))                                 # init c
@@ -172,11 +177,12 @@ function NRST.tune!(
     xpl = fbdr.xpl
     mv = βpre = zero(TF)
     for i in N:-1:1
+        println("Exploring level $i.")
         β       = np.betas[i+1]                        # get the β for the level
         params  = np.xplpars[i]                        # get explorer params for this level 
         NRST.explore!(xpl, rng, β, params, zero(TI))   # use existing machinery to set params
         NRST.run!(xpl, rng, vs)                        # run the explorer, writing V to vs
-        newmv   = mean(vs)                             # compute mean
+        newmv   = mean(v->clamp(v,-max_v,max_v), vs)   # compute mean
         if i<N
             hδβ    = (β-βpre)/2
             c[i+1] = c[i+2] + hδβ*(mv + newmv)         # trapezoidal approx increment
@@ -189,7 +195,7 @@ function NRST.tune!(
     newmv = zero(TF)
     for _ in eachindex(vs)
         nvs   += NRST.refreshx!(fbdr, rng)             # note: fbdr.ip is not changed here, only .x and .curV
-        newmv += fbdr.curV[]
+        newmv += clamp(fbdr.curV[],-max_v,max_v)
     end
     newmv = newmv/nsteps
     c[1]  = c[2] - βpre*(mv + newmv)

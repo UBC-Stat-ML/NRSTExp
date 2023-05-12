@@ -1,3 +1,9 @@
+function mixed_lin_log_grid(N::Int)
+    N_lin = N÷2
+    N_log = N-N_lin
+    sort([range(0.,1-inv(N),N_lin); 2. .^ range(-55,0,N_log)])
+end
+
 # sample from log-probs
 # adapted from StatsBase method: https://github.com/JuliaStats/StatsBase.jl/blob/bd4ca61f4bb75f2c6cd0a47aee1cfde7b696eb9c/src/sampling.jl#L552
 # when we have ps = exp.(lps), then sampling does 

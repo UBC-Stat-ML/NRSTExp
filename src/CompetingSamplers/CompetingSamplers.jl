@@ -22,4 +22,9 @@ export SH16Sampler
 include("FaiziEtAl2020.jl")
 export FBDRSampler
 
+# quick and dirty way of creating other ST samplers
+function NRST.init_sampler(::Type{TST}, args...; kwargs...) where {TST <: NRST.AbstractSTSampler}
+    TST(first(NRSTSampler(args...; tune=false, kwargs...)))
+end
+
 end

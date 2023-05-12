@@ -16,8 +16,8 @@ struct GT95Sampler{T,I<:Int,K<:AbstractFloat,TXp<:NRST.ExplorationKernel,TProb<:
     curV::Base.RefValue{K} # current energy V(x) (stored as ref to make it mutable)
 end
 
-# constructor: copy key fields of an existing (usually pre-tuned) NRSTSampler
-GT95Sampler(ns::NRSTSampler) = GT95Sampler(NRST.copyfields(ns)...)
+# constructor: copy key fields of an existing (usually pre-tuned) AbstractSTSampler
+GT95Sampler(st::NRST.AbstractSTSampler) = GT95Sampler(NRST.copyfields(st)...)
 
 ###############################################################################
 # sampling methods
@@ -74,10 +74,6 @@ end
 # Tuning for GT95Sampler
 ###############################################################################
 
-# quick and dirty way of creating other ST samplers
-function NRST.init_sampler(::Type{TST}, args...; kwargs...) where {TST <: NRST.AbstractSTSampler}
-    TST(first(NRSTSampler(args...; kwargs...)))
-end
 function init_and_tune(
     ::Type{TGT},
     tm::NRST.TemperedModel,

@@ -11,8 +11,8 @@ struct SH16Sampler{T,I<:Int,K<:AbstractFloat,TXp<:NRST.ExplorationKernel,TProb<:
     curV::Base.RefValue{K} # current energy V(x) (stored as ref to make it mutable)
 end
 
-# constructor: copy key fields of an existing (usually pre-tuned) NRSTSampler
-SH16Sampler(ns::NRSTSampler) = SH16Sampler(NRST.copyfields(ns)...)
+# constructor: copy key fields of an existing (usually pre-tuned) AbstractSTSampler
+SH16Sampler(st::NRST.AbstractSTSampler) = SH16Sampler(NRST.copyfields(st)...)
 
 ###############################################################################
 # sampling methods
@@ -115,20 +115,26 @@ function NRST.tune!(
     sh::SH16Sampler{T,TI,TF},
     rng::AbstractRNG;
     min_steps::Int = 0,
-    max_steps::Int = 1_000_000,
+    max_steps::Int = 100_000,                              # according to Fig 1.
     correct::Bool = false,
     xv_init = nothing,
-    min_visits::Int = 1,                                   # min number of visits to i=0
+    min_visits::Int = 32,                                  # FIX BY US: instead of 1 visit, set min number of visits to i=0
     zero_c::Bool = true,
-    betas::AbstractVector = range(zero(TF), one(TF), sh.np.N+1) # uniform by default 
+    log_grid::Bool = true,                                 # FIX BY US: use log-unif grid in general instead of unif
+    max_v = inv(eps(TF))                                   # FIX BY US: clamp V values
     ) where {T,TI<:Int,TF<:AbstractFloat}
     # tune grid
-    np = sh.np
-    copyto!(np.betas, betas)
+    np    = sh.np
+    N     = np.N
+    copyto!(
+        np.betas, log_grid ? 
+            mixed_lin_log_grid(N+1) : #[zero(TF); 2. .^ range(-55,0,N)] :
+            range(zero(TF), one(TF), N+1)
+    )
     
     # tune the affinities
-    N   = np.N
-    c   = np.c
+    betas = np.betas
+    c     = np.c
     zero_c && (fill!(c, zero(TF)))                         # init c
     mvs = [Mean(TF) for _ in 0:N]                          # init N+1 OnlineStats Mean accumulators for mean Vs
     sh.ip[begin] = N                                       # start simulation from the coldest level == largest beta
@@ -150,7 +156,7 @@ function NRST.tune!(
         ip1 = i+1
         ip2 = i+2
         i == zero(TI) && (nv0 += 1; println("Step $n: nv0=$(nv0)."))
-        fit!(mvs[ip1], -sh.curV[])                         # update running mean of -V at i
+        fit!(mvs[ip1], -clamp(sh.curV[], -max_v, max_v))   # update running mean of -V at i
         EV1 = value(mvs[ip1])                              # extract the updated value
         if i==N
             c[N] = (betas[ip1]-betas[i])*EV1               # special update, implicitly assumes c[N+1] = -mv_N*db/2
@@ -163,5 +169,6 @@ function NRST.tune!(
             end
         end
     end
+    return mvs
 end
 

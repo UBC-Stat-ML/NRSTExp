@@ -1,5 +1,5 @@
 ###############################################################################
-# compare TourEff/runtime between NRST and IdealProcesses
+# compare NRST against competitors, using NRST tuning for all
 ###############################################################################
 
 function benchmark(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFloat, Λ::AbstractFloat)

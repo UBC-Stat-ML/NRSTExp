@@ -83,6 +83,8 @@ function dispatch(pars::Dict)
         dfres = hyperparams(ns, rng, TE, Λ)
     elseif exper == "benchmark"
         dfres = benchmark(ns, rng, TE, Λ)
+    elseif exper == "benchSH16tune"
+        dfres = benchmark_SH16_tuning(ns, rng, TE, Λ)
     else
         throw(ArgumentError("Experiment $exper not yet implemented."))
     end
