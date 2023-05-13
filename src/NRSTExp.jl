@@ -17,7 +17,7 @@ include("dispatcher.jl")
 include("utils.jl")
 include("hyperparams.jl")
 include("benchmark.jl")
-include("benchmark_SH16_tuning.jl")
+include("benchmark_own_tuning.jl")
 include("viz_utils.jl")
 
 # sub-modules

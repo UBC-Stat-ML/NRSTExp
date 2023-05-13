@@ -20,7 +20,7 @@ end
 #           = logaddexp(clp_{n-1}, lps[n])
 # Finally: sum(exp,lps) < 1 is allowed by having a default return value -1,
 # which represents that the missing mass was selected.
-function sample_logprob(rng::AbstractRNG, lps::Vector{TF}; tol=10eps(TF)) where {TF<:AbstractFloat}
+function sample_logprob(rng::AbstractRNG, lps::Vector{TF}; tol=1000eps(TF)) where {TF<:AbstractFloat}
     nE  = -randexp(rng)
     M   = length(lps)
     m   = 1

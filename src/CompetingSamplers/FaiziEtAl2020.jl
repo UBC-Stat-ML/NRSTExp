@@ -153,8 +153,8 @@ end
 function NRST.tune!(
     fbdr::FBDRSampler{T,TI,TF},
     rng::AbstractRNG;
-    nsteps::Int = 2^12,
-    log_grid::Bool = false,
+    nsteps::Int = 2^7,
+    log_grid::Bool = true,
     max_v = inv(eps(TF))
     ) where {T,TI<:Int,TF<:AbstractFloat}
     # set grid
@@ -162,7 +162,7 @@ function NRST.tune!(
     N  = np.N
     copyto!(
         np.betas, log_grid ? 
-            [zero(TF); 2. .^ range(-55,0,N)] :
+            mixed_lin_log_grid(N+1) :
             range(zero(TF), one(TF), N+1)
     )
 

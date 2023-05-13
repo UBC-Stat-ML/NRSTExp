@@ -5,31 +5,37 @@ using NRSTExp.ExamplesGallery
 using SplittableRandoms
 
 # define and tune an NRSTSampler as template
-#HierarchicalModel();#ThresholdWeibull();
-tm = Funnel();#XYModel(8);#MRNATrans();#Banana();#ChalLogistic();#MvNormalTM(32,4.,2.);
-rng = SplittableRandom(5427)
+tm = HierarchicalModel();#ThresholdWeibull();#Funnel();#Banana();#XYModel(8);#MRNATrans();#ChalLogistic();#MvNormalTM(32,4.,2.);
+rng = SplittableRandom(40378)
 ns, TE, Λ = NRSTSampler(
     tm,
     rng,
 );
 res = parallel_run(ns, rng, TE=TE);
 println("NRST cost: $(sum(NRST.get_nvevals, res.trvec))")
+res = parallel_run(ns, rng, NRST.NRSTTrace(ns),TE=TE);
+vmin,imin = findmin(res.trVs[end])
+xmin = res.xarray[end][imin]
 
 using Plots
 
 f0 = 0.#free_energy(tm,0);
 # plot(b->free_energy(tm,b),0,1,label="true")
 scatter(ns.np.betas,ns.np.c .+ (f0-first(ns.np.c)),label="NRST")
-# sh = NRST.init_sampler(SH16Sampler, tm, rng, N=512-1);
-# mvs = NRST.tune!(sh,rng);
-# scatter!(sh.np.betas,sh.np.c .+ (f0-first(sh.np.c)),label="SH16")
-fbdr = NRST.init_sampler(FBDRSampler, tm, rng, N=512-1);
-NRST.tune!(fbdr,rng,nsteps=2^7);
-scatter!(fbdr.np.betas,fbdr.np.c .+ (f0-first(fbdr.np.c)),label="FBDR")
-
-TE_sh = last(parallel_run(sh, rng, ntours=512).toureff)
+sh = NRST.init_sampler(SH16Sampler, tm, rng, N=512-1, xv_init=(xmin,vmin)); # bottleneck is HierarchicalModel
+mvs = NRST.tune!(sh,rng,max_steps=2^18);
+scatter!(sh.np.betas,sh.np.c .+ (f0-first(sh.np.c)),label="SH16")
+TE_sh = last(parallel_run(sh, rng, ntours=2048).toureff)
 res_sh = parallel_run(sh, rng, TE=TE_sh);
 println("SH16 cost: $(sum(NRST.get_nvevals, res_sh.trvec))")
+
+
+fbdr = NRST.init_sampler(FBDRSampler, tm, rng, N=512-1); # bottleneck for N is Funnel
+NRST.tune!(fbdr,rng,nsteps=2^7, log_grid=true);
+scatter!(fbdr.np.betas,fbdr.np.c .+ (f0-first(fbdr.np.c)),label="FBDR")
+TE_fbdr = last(parallel_run(fbdr, rng, ntours=2048).toureff)
+res_fbdr = parallel_run(fbdr, rng, TE=TE_fbdr);
+println("FBDR cost: $(sum(NRST.get_nvevals, res_fbdr.trvec))")
 
 using OnlineStats
 value.(mvs)
@@ -80,8 +86,8 @@ value.(mvs)
 
 # julia --project -t 4 \
 #     -e "using NRSTExp; dispatch()" \
-#     exp=benchSH16tune  \
-#     mod=Banana  \
+#     exp=benchOwnTune  \
+#     mod=Challenger  \
 #     fun=mean    \
 #     cor=0.95 \
 #     gam=2.0  \

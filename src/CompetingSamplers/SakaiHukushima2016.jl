@@ -109,15 +109,15 @@ end
 #     > update g2 and g3 after every (n) MCS.
 # This is obviously wrong on its face since you can only update mv_{i+1} (you 
 # only see one i at each step), but you *can* update two (contiguous) cs.
+# PROBLEM: the update c_i is ultimately IMPOSSIBLE since the mv_i accumulators
+# is empty before visiting that state. We fix that with a right Riemann sum.
 ###############################################################################
 
 function NRST.tune!(
     sh::SH16Sampler{T,TI,TF},
     rng::AbstractRNG;
     min_steps::Int = 0,
-    max_steps::Int = 100_000,                              # according to Fig 1.
-    correct::Bool = false,
-    xv_init = nothing,
+    max_steps::Int = 2^18,                              # according to Fig 1.
     min_visits::Int = 32,                                  # FIX BY US: instead of 1 visit, set min number of visits to i=0
     zero_c::Bool = true,
     log_grid::Bool = true,                                 # FIX BY US: use log-unif grid in general instead of unif
@@ -149,24 +149,22 @@ function NRST.tune!(
     # on-the-fly weight determination loop
     n   = 0
     nv0 = 0
-    while n < max_steps && (nv0 < min_visits || n < min_steps)
+    @inbounds while n < max_steps && (nv0 < min_visits || n < min_steps)
         n += 1
         _, _ , nvs = NRST.step!(sh, rng)
         i   = first(sh.ip)
         ip1 = i+1
         ip2 = i+2
         i == zero(TI) && (nv0 += 1; println("Step $n: nv0=$(nv0)."))
-        fit!(mvs[ip1], -clamp(sh.curV[], -max_v, max_v))   # update running mean of -V at i
+        fit!(mvs[ip1], clamp(sh.curV[], -max_v, max_v))    # update running mean of V at i
         EV1 = value(mvs[ip1])                              # extract the updated value
-        if i==N
-            c[N] = (betas[ip1]-betas[i])*EV1               # special update, implicitly assumes c[N+1] = -mv_N*db/2
-        else
-            hδβ  = (betas[i+2] - betas[i+1])/2
-            i == N-1 && correct && (c[end] = -hδβ*EV1)     # this makes the update for i==N valid but it is not in the paper
-            c[ip1] = c[ip2] + hδβ*(value(mvs[ip2]) + EV1)
-            if i > zero(TI)
-                c[i] = c[ip1] + hδβ*(value(mvs[i]) + EV1)
-            end
+        if i < N
+            δβ     = betas[ip2] - betas[ip1]
+            c[ip1] = c[ip2] - δβ*(value(mvs[ip2]) + EV1)/2 # we start from i=N so nobs(mvs[ip2])>0 always
+        end
+        if i > 1
+            δβ     = betas[ip1] - betas[i]
+            c[i]   = c[ip1] - δβ*(nobs(mvs[i])>0 ? (value(mvs[i])+EV1)/2 : EV1)
         end
     end
     return mvs
