@@ -14,15 +14,28 @@ function benchmark_own_tuning(ns::NRSTSampler, rng::AbstractRNG, TE::AbstractFlo
     ### SH16
     sh = NRST.init_sampler(SH16Sampler, ns.np.tm, rng, N=512-1) # bottleneck is HierarchicalModel
     NRST.tune!(sh,rng)
-    benchmark_sampler!(sh,rng,df,id="SH16",ntours_short=ntours_short)
+    t = @async benchmark_sampler!(sh,rng,df,id="SH16",ntours_short=ntours_short)
+    status = timedwait(3600) do
+        istaskdone(t)
+    end
+    println("SH16Sampler benchmark status: $status.")
 
     ### FBDR
     fbdr = NRST.init_sampler(FBDRSampler, ns.np.tm, rng, N=512-1) # bottleneck for N is Funnel
     NRST.tune!(fbdr,rng)
-    benchmark_sampler!(fbdr,rng,df,id="FBDR",ntours_short=ntours_short)
+    t = @async benchmark_sampler!(fbdr,rng,df,id="FBDR",ntours_short=ntours_short)
+    status = timedwait(3600) do
+        istaskdone(t)
+    end
+    println("FBDRSampler benchmark status: $status.")
 
     ### GT95
-    benchmark_sampler!(GT95Sampler(fbdr),rng,df,id="GT95",ntours_short=ntours_short)
+    gt = GT95Sampler(fbdr) # just copy FBDR's config, more reliable than SH16
+    t = @async benchmark_sampler!(gt,rng,df,id="GT95",ntours_short=ntours_short)
+    status = timedwait(3600) do
+        istaskdone(t)
+    end
+    println("GT95Sampler benchmark status: $status.")
 
     # add extra metadata
     insertcols!(df,

@@ -136,7 +136,7 @@ function NRST.tune!(
     # tune the affinities
     betas = np.betas
     c     = np.c
-    zero_c && (fill!(c, zero(TF)))                         # init c
+    fill!(c, NaN); c[end]=zero(TF)                         # init c
     mvs = [Mean(TF) for _ in 0:N]                          # init N+1 OnlineStats Mean accumulators for mean Vs
     sh.ip[begin] = N                                       # start simulation from the coldest level == largest beta
     sh.ip[end] = rand(rng, Bool) ? one(TI) : -one(TI)      # select random eps
@@ -167,6 +167,11 @@ function NRST.tune!(
             δβ     = betas[ip1] - betas[i]
             c[i]   = c[ip1] - δβ*(nobs(mvs[i])>0 ? (value(mvs[i])+EV1)/2 : EV1)
         end
+    end
+    if nv0==0 # try to repair if possible
+        idx    = findlast(isnan, c)
+        extrap = linear_interpolation(betas[(idx+1):end],c[(idx+1):end], extrapolation_bc = Line())
+        c[1:idx] .= extrap.(betas[1:idx])
     end
     return mvs
 end

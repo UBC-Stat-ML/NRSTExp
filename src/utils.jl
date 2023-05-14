@@ -18,14 +18,16 @@ function benchmark_sampler!(
     if isnan(TE) # need to estimate it with a short run
         TE = last(parallel_run(st, rng, ntours=ntours_short).toureff)
     end
-    ntours= NRST.min_ntours_TE(TE,α,δ)
-    res   = parallel_run(st, rng, ntours=ntours)
-    ξ, _  = fit_gpd(res)                           # compute tail index of the distribution of number of visits to the top
-    tlens = tourlengths(res)
-    nvevs = NRST.get_nvevals.(res.trvec)
-    TE    = last(res.toureff)                      # get better estimate
-    nvtop = res.visits[end,1]+res.visits[end,2]
-    saveres!(df, id, tlens, nvevs, TE, ntours, ξ, nvtop)
+    if TE >= NRST.DEFAULT_TE_min # bail if TE is too low
+        ntours= NRST.min_ntours_TE(TE,α,δ)
+        res   = parallel_run(st, rng, ntours=ntours)
+        ξ, _  = fit_gpd(res)                           # compute tail index of the distribution of number of visits to the top
+        tlens = tourlengths(res)
+        nvevs = NRST.get_nvevals.(res.trvec)
+        TE    = last(res.toureff)                      # get better estimate
+        nvtop = res.visits[end,1]+res.visits[end,2]
+        saveres!(df, id, tlens, nvevs, TE, ntours, ξ, nvtop)
+    end
 end
 
 # store results into df

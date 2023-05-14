@@ -5,24 +5,24 @@ using NRSTExp.ExamplesGallery
 using SplittableRandoms
 
 # define and tune an NRSTSampler as template
-tm = HierarchicalModel();#ThresholdWeibull();#Funnel();#Banana();#XYModel(8);#MRNATrans();#ChalLogistic();#MvNormalTM(32,4.,2.);
-rng = SplittableRandom(40378)
+tm = MRNATrans();#ThresholdWeibull();#Funnel();#Banana();#XYModel(8);#MRNATrans();#ChalLogistic();#MvNormalTM(32,4.,2.);
+rng = SplittableRandom(89440)
 ns, TE, Λ = NRSTSampler(
     tm,
     rng,
 );
 res = parallel_run(ns, rng, TE=TE);
 println("NRST cost: $(sum(NRST.get_nvevals, res.trvec))")
-res = parallel_run(ns, rng, NRST.NRSTTrace(ns),TE=TE);
-vmin,imin = findmin(res.trVs[end])
-xmin = res.xarray[end][imin]
+# res = parallel_run(ns, rng, NRST.NRSTTrace(ns),TE=TE);
+# vmin,imin = findmin(res.trVs[end])
+# xmin = res.xarray[end][imin]
 
 using Plots
 
 f0 = 0.#free_energy(tm,0);
 # plot(b->free_energy(tm,b),0,1,label="true")
 scatter(ns.np.betas,ns.np.c .+ (f0-first(ns.np.c)),label="NRST")
-sh = NRST.init_sampler(SH16Sampler, tm, rng, N=512-1, xv_init=(xmin,vmin)); # bottleneck is HierarchicalModel
+sh = NRST.init_sampler(SH16Sampler, tm, rng, N=512-1);#, xv_init=(xmin,vmin)); # bottleneck is HierarchicalModel
 mvs = NRST.tune!(sh,rng,max_steps=2^18);
 scatter!(sh.np.betas,sh.np.c .+ (f0-first(sh.np.c)),label="SH16")
 TE_sh = last(parallel_run(sh, rng, ntours=2048).toureff)
@@ -93,7 +93,7 @@ value.(mvs)
 #     gam=2.0  \
 #     xpl=SSSO \
 #     xps=1e-5 \
-#     seed=40322
+#     seed=89440
 
 ###############################################################################
 # end

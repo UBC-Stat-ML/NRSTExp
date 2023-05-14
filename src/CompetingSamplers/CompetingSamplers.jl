@@ -1,6 +1,7 @@
 module CompetingSamplers
 
 using CubicSplines: CubicSpline
+using Interpolations
 using IrrationalConstants: logtwo
 using LogExpFunctions: logsumexp, log1mexp, logaddexp
 using OnlineStats: Mean, fit!, value, nobs
