@@ -151,7 +151,7 @@ end
 ###############################################################################
 
 function NRST.tune!(
-    fbdr::FBDRSampler{T,TI,TF},
+    fbdr::NRST.AbstractSTSampler{T,TI,TF}, # allows using this method for GT95 too
     rng::AbstractRNG;
     nsteps::Int = 2^7,
     log_grid::Bool = true,

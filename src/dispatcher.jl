@@ -26,6 +26,7 @@ end
 
 function dispatch(pars::Dict)
     nexpl   = -1
+    sampler = get(pars, "sam", "NRST")
     exper   = pars["exp"]
     model   = pars["mod"]
     maxcor  = parse(Float64, pars["cor"])
@@ -65,26 +66,36 @@ function dispatch(pars::Dict)
     end
 
     # build and tune sampler
-    ns, TE, Λ = NRSTSampler(
-        tm,
-        rng,
-        TXpl,
-        use_mean   = usemean,
-        maxcor     = maxcor,
-        nexpl      = nexpl,
-        γ          = γ,
-        xpl_smooth_λ = xplsmλ,
-        adapt_nexpls = nexpl < 0
-    )
+    if sampler == "NRST"
+        st, TE, Λ = NRSTSampler(
+            tm,
+            rng,
+            TXpl,
+            use_mean   = usemean,
+            maxcor     = maxcor,
+            nexpl      = nexpl,
+            γ          = γ,
+            xpl_smooth_λ = xplsmλ,
+            adapt_nexpls = nexpl < 0
+        )
+    else
+        TST = sampler == "GT95" ? GT95Sampler : 
+            sampler == "FBDR" ? FBDRSampler : SH16Sampler
+        st = NRST.init_sampler(TST, tm, rng, N=512-1) # bottleneck for FBDR is Funnel, HierarchicalModel for SH16
+        NRST.tune!(st,rng)
+        TE = last(parallel_run(st, rng, ntours=2048).toureff)
+        println("TE = $TE")
+        Λ  = NaN
+    end
 
     # dispatch experiment
     # should return a dataframe that we can then save as csv
     if exper == "hyperparams" || exper == "TE_ELE"
-        dfres = hyperparams(ns, rng, TE, Λ)
+        dfres = hyperparams(st, rng, TE, Λ)
     elseif exper == "benchmark"
-        dfres = benchmark(ns, rng, TE, Λ)
+        dfres = benchmark(st, rng, TE, Λ)
     elseif exper == "benchOwnTune"
-        dfres = benchmark_own_tuning(ns, rng, TE, Λ)
+        dfres = benchmark_own_tuning(st, rng, TE, Λ, sampler)
     else
         throw(ArgumentError("Experiment $exper not yet implemented."))
     end

@@ -37,8 +37,13 @@ TE_fbdr = last(parallel_run(fbdr, rng, ntours=2048).toureff)
 res_fbdr = parallel_run(fbdr, rng, TE=TE_fbdr);
 println("FBDR cost: $(sum(NRST.get_nvevals, res_fbdr.trvec))")
 
-using OnlineStats
-value.(mvs)
+
+gt = NRST.init_sampler(GT95Sampler, tm, rng, N=512-1); # bottleneck for N is Funnel
+NRST.tune!(gt,rng);
+scatter!(gt.np.betas,gt.np.c .+ (f0-first(gt.np.c)),label="GT95")
+TE_gt = last(parallel_run(gt, rng, ntours=2048).toureff)
+res_gt = parallel_run(gt, rng, TE=TE_gt);
+println("GT95 cost: $(sum(NRST.get_nvevals, res_gt.trvec))")
 
 
 # TODO: convert this into a viz method in NRSTExp
@@ -87,6 +92,7 @@ value.(mvs)
 # julia --project -t 4 \
 #     -e "using NRSTExp; dispatch()" \
 #     exp=benchOwnTune  \
+#     sam=GT95 \
 #     mod=Challenger  \
 #     fun=mean    \
 #     cor=0.95 \
