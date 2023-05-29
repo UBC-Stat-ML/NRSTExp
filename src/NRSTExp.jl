@@ -4,12 +4,14 @@ using Random: AbstractRNG
 using DataFrames
 using DelimitedFiles: writedlm
 using CSV: CSV
+using Interpolations: gradient1
 using NRST
 using ParetoSmooth: ParetoSmooth
 using SplittableRandoms: SplittableRandom
 using Plots
 using Plots.PlotMeasures: px
 using ColorSchemes: seaborn_colorblind
+using UnPack: @unpack
 
 export dispatch, gen_iproc_plots
 

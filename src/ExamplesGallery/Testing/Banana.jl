@@ -39,6 +39,8 @@ function NRST.V(tm::Banana, x)
 end
 
 # using Printf, Plots, ColorSchemes
+# res = parallel_run(ns, rng, NRST.NRSTTrace(ns), TE=TE);
+# X = collect(hcat(res.xarray[end]...)');
 # colorgrad = cgrad([ColorSchemes.viridis[begin], ColorSchemes.viridis[end]],ns.np.N+1 )
 # anim = @animate for (i,xs) in enumerate(res.xarray)
 #     β = @sprintf("%.2e", ns.np.betas[i])
@@ -50,3 +52,4 @@ end
 #     )
 # end
 # gif(anim, "banana.gif", fps=2)
+
