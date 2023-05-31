@@ -28,14 +28,15 @@ function plot_trace_iproc(
     N         = NRST.get_N(res)
     TE        = last(res.toureff)
     is,ibot   = get_first_nsteps(res.trvec; nsteps, kwargs...)
-    title_str = alg_name * " (TE ≈ $(round(TE, digits=2)))"
+    title_str = alg_name * " (TE = $(round(TE, digits=2)))"
     xlab      = alg_name == "NRST"
     piproc    = plot(
         0:(length(is)-1), is, grid = false, palette = DEF_PAL, ylims = (0,N),
         ylabel = "Level", label = "",
         left_margin = 15px, bottom_margin = 15px,
         size = (675, xlab ? 180 : 171),
-        titlefontsize = 11
+        titlefontsize = 11,
+        fontfamily = "Helvetica"
     )
     write_title && title!(piproc, title_str)
     xlab && xlabel!(piproc, "Step")
@@ -126,6 +127,9 @@ end
 
 ###############################################################################
 # runtime plot
+# note: if the max tour is in the first batch of tours processed, then it is
+# possible that processing with fewer workers will finish at same time as 
+# with workers=tours.
 ###############################################################################
 
 function move_fwd!(pq,t)
@@ -171,25 +175,34 @@ end
 function fmt_thousands(a::Int)
     #a = 556046
     a_str = string(a)
-    s = ""
-    for i in 1:length(a_str)
+    len   = length(a_str)
+    s     = ""
+    for i in 1:len
         #i=1
         i>1 && rem(i-1,3) == 0 && (s = "," * s)
-        p = length(a_str)-i+1
+        p = len-i+1
         s = a_str[p] * s
     end
     s
 end
 fmt_thousands(a::AbstractFloat) = fmt_thousands(round(Int, a))
 function make_runtime_plot(;
-    Λ    = 5.,                # tempering barrier
-    K    = 10000,             # total number of tours
-    Prat = 2. .^ range(-4, 0) # vector of proportions of workers over total number of tours
+    Λ    = 5.,                 # tempering barrier
+    K    = 10000,              # total number of tours
+    Prat = 2. .^ range(-4, 0), # vector of proportions of workers over total number of tours
+    size = (450,225)           # size of the plt
     )
     
     # simulate
     rng = Xoshiro(1)
     ts  = Λ*randexp(rng, K)
+    i   = argmax(ts)
+    if i <= K/2               # swap position of max so that plot looks more natural (see comment above)
+        j = K-i+1
+        m = ts[i]
+        ts[i] = ts[j]
+        ts[j] = m
+    end
     cpt = sum(ts)
     Pvec= round.(Int, K .* Prat)
     pq  = PriorityQueue{Int64,Float64}()
@@ -197,17 +210,23 @@ function make_runtime_plot(;
     
     # plot the results
     lss = reverse!([:solid, :dash, :dot, :dashdot, :dashdotdot])
-    plt = plot(palette = :seaborn_colorblind6)
+    pal = seaborn_colorblind6
+    plt = plot(fontfamily = "Helvetica")
     for (i,p) in enumerate(Pvec)
         #i=1; p = Prat[i]
         rs,ws = res[i]
-        plot!(plt, 100*rs/cpt, ws, label=fmt_thousands(p), linestyle=lss[i], linewidth=2)
+        lab   = fmt_thousands(p)
+        plot!(plt, 
+            100*rs/cpt, ws, label=lab, linestyle=lss[i], linewidth=2, color=pal[i]
+        )
+        scatter!(plt,[100*rs[end]/cpt],[0], label="", color=pal[i],markerstrokewidth=0)
     end
     plot!(plt,
-        legendtitle="Avail. workers", foreground_color_legend = nothing,
+        # legendtitle="Avail. workers", # impossible to center
+        foreground_color_legend = nothing,
         xlabel = "Elapsed-time / CPU-time (%)",
         ylabel = "Number of busy workers",
-        size   = (500,250)
+        size   = size
     )
     ys = first(first(yticks(plt)))
     yticks!(plt,ys,fmt_thousands.(ys))
