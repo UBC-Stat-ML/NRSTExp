@@ -1,6 +1,6 @@
 using NRSTExp
 NRSTExp.make_runtime_plot()
-NRSTExp.gen_iproc_plots()
+
 using NRST
 using NRSTExp
 using NRSTExp.CompetingSamplers
@@ -20,7 +20,7 @@ res = parallel_run(ns, rng, NRST.NRSTTrace(ns), TE=TE);
 using Random, Plots, ColorSchemes, DataStructures
 
 Λ    = 5.                # tempering barrier
-K    = 10000             # total number of tours
+K    = 10             # total number of tours
 Prat = 2. .^ range(-4, 0) # vector of proportions of workers over total number of tours
 
 
@@ -37,6 +37,24 @@ end
 cpt = sum(ts)
 Pvec= round.(Int, K .* Prat)
 pq  = PriorityQueue{Int64,Float64}()
+P = 3
+rs,ws = NRSTExp.simulate_events(pq,ts,P)
+rs
+
+# move time fwd in the queue <=> substract fixed t from all queue priorities
+# key: this does not change relative order! So we can modify their setindex!
+# method to avoid the percolating phase. See below
+# https://github.com/JuliaCollections/DataStructures.jl/blob/d0dd2a012ebd07ff31193b21130109baa50cfe2b/src/priorityqueue.jl#L192
+function NRSTExp.move_fwd!(pq::PriorityQueue{K,V},t) where {K,V}
+    for key in keys(pq)
+        i = pq.index[key]
+        oldvalue = pq.xs[i].second
+        pq.xs[i] = Pair{K,V}(key, oldvalue-t)
+    end
+    pq
+end
+
+
 res = [NRSTExp.simulate_events(pq,ts,P) for P in Pvec]
 
 # plot the results

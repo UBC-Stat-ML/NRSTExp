@@ -132,9 +132,15 @@ end
 # with workers=tours.
 ###############################################################################
 
-function move_fwd!(pq,t)
-    for e in keys(pq)
-        pq[e] -= t
+# move time fwd in the queue <=> substract fixed t from all queue priorities
+# key: this does not change relative order! So we can modify their "setindex!"
+# method to avoid the percolating phase. See their original method in the link
+# https://github.com/JuliaCollections/DataStructures.jl/blob/d0dd2a012ebd07ff31193b21130109baa50cfe2b/src/priorityqueue.jl#L192
+function move_fwd!(pq::PriorityQueue{K,V},t) where {K,V}
+    @inbounds for key in keys(pq)
+        i        = pq.index[key]
+        oldvalue = pq.xs[i].second
+        pq.xs[i] = Pair{K,V}(key, oldvalue-t)
     end
     pq
 end
@@ -142,7 +148,7 @@ function to_sorted_array!(pq,rs,T)
     @assert length(pq) + 2 == length(rs)
     rs[1] = zero(eltype(rs))
     rs[2] = T
-    for i in 1:length(pq)
+    @inbounds for i in 1:length(pq)
         rs[i+2] = T + last(dequeue_pair!(pq))
     end
     rs
@@ -158,27 +164,25 @@ function simulate_events(pq,ts,P)
     for i in 1:P
         pq[i] = ts[i]
     end
-    k   = P                          # tours taken so far from ts
-    T   = 0.                         # init time
+    k   = P                              # tours taken so far from ts
+    T   = 0.                             # init time
     K   = length(ts)
     while k<K
-        t  = last(dequeue_pair!(pq)) # jump to next event
-        T += t                       # move wall clock fwd
-        move_fwd!(pq,t)              # move time forward in the queue
-        k += 1                       # take another tour and put in queue
-        enqueue!(pq, k, ts[k])
+        t  = last(dequeue_pair!(pq))     # jump to next event
+        T += t                           # move wall clock fwd
+        move_fwd!(pq,t)                  # move time forward in the queue
+        k += 1                           # take another tour and put in queue
+        @inbounds enqueue!(pq, k, ts[k])
     end
-    rs = to_sorted_array!(pq,T)      # queue is emptied here
+    rs = to_sorted_array!(pq,T)          # queue is emptied here
     ws = [P;P:-1:0]
     (rs,ws)
 end
 function fmt_thousands(a::Int)
-    #a = 556046
     a_str = string(a)
     len   = length(a_str)
     s     = ""
     for i in 1:len
-        #i=1
         i>1 && rem(i-1,3) == 0 && (s = "," * s)
         p = len-i+1
         s = a_str[p] * s
