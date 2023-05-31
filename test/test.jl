@@ -1,6 +1,3 @@
-using NRSTExp
-NRSTExp.get_barrier_df()
-
 using NRST
 using NRSTExp
 using NRSTExp.CompetingSamplers
@@ -15,25 +12,6 @@ ns, TE, Λ = NRSTSampler(
     rng,
 );
 res = parallel_run(ns, rng, NRST.NRSTTrace(ns), TE=TE);
-
-using Plots
-tms = (Banana(), Funnel(), HierarchicalModel(), MRNATrans(), ThresholdWeibull(), XYModel(8));
-labs = ("Banana", "Funnel", "HierarchModel", "MRNATrans", "ThreshWeibull", "XYModel")
-df = DataFrame()
-
-
-
-
-
-vcat
-# rho' Plot
-ρ_prime = NRSTExp.build_rhoprime(f_Λnorm, Λs[end], ns.np.log_grid);
-plot!(ρ_prime,0,1, ylims=(0,Λs[end]))
-
-
-
-spl = fit(SmoothingSpline, X, Y, 250.0) # λ=250.0
-Ypred = predict(spl) # fitted vector
 
 ###############################################################################
 # example system call

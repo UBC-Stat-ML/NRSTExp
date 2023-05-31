@@ -1,16 +1,17 @@
 module NRSTExp
 
-using Random: AbstractRNG
+using ColorSchemes: seaborn_colorblind, seaborn_colorblind6
 using DataFrames
+using DataStructures
 using DelimitedFiles: writedlm
 using CSV: CSV
 using Interpolations: gradient1
 using NRST
 using ParetoSmooth: ParetoSmooth
-using SplittableRandoms: SplittableRandom
 using Plots
 using Plots.PlotMeasures: px
-using ColorSchemes: seaborn_colorblind
+using Random: AbstractRNG, Xoshiro, randexp
+using SplittableRandoms: SplittableRandom
 using UnPack: @unpack
 
 export dispatch, gen_iproc_plots

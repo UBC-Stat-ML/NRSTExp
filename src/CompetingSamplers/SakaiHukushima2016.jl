@@ -120,7 +120,6 @@ function NRST.tune!(
     max_steps::Int = 2^18,                              # according to Fig 1.
     xv_init = nothing,                                     # pass a good starting point, random can be terrible
     min_visits::Int = 32,                                  # FIX BY US: instead of 1 visit, set min number of visits to i=0
-    zero_c::Bool = true,
     log_grid::Bool = true,                                 # FIX BY US: use log-unif grid in general instead of unif
     max_v = inv(eps(TF))                                   # FIX BY US: clamp V values
     ) where {T,TI<:Int,TF<:AbstractFloat}
