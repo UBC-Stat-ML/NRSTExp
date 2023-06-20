@@ -4,14 +4,16 @@ using ColorSchemes: seaborn_colorblind, seaborn_colorblind6
 using DataFrames
 using DataStructures
 using DelimitedFiles: writedlm
+using Distributions
 using CSV: CSV
 using Interpolations: gradient1
 using NRST
 using ParetoSmooth: ParetoSmooth
 using Plots
 using Plots.PlotMeasures: px
-using Random: AbstractRNG, Xoshiro, randexp
+using Random
 using SplittableRandoms: SplittableRandom
+using StatsBase: ecdf
 using UnPack: @unpack
 
 export dispatch, gen_iproc_plots

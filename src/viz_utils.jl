@@ -65,12 +65,18 @@ function gen_iproc_plots(;kwargs...)
     return
 end
 
+# models used in the paper
+function get_tms_and_labels()
+    tms  = (Banana(), Funnel(), HierarchicalModel(), MRNATrans(), ThresholdWeibull(), XYModel(8))
+    labs = ("Banana", "Funnel", "HierarchicalModel", "MRNATrans", "ThresholdWeibull", "XYModel")
+    tms, labs
+end
+
 # estimate barriers and export as CSV for plotting in R
 function get_barrier_df()
-    tms  = (Banana(), Funnel(), HierarchicalModel(), MRNATrans(), ThresholdWeibull(), XYModel(8));
-    labs = ("Banana", "Funnel", "HierarchicalModel", "MRNATrans", "ThresholdWeibull", "XYModel")
-    rng  = SplittableRandom(89440)
-    df   = vcat((get_barrier_df(tms[i], rng, labs[i]) for i in eachindex(tms))...)
+    tms, labs = get_tms_and_labels()
+    rng = SplittableRandom(89440)
+    df  = vcat((get_barrier_df(tms[i], rng, labs[i]) for i in eachindex(tms))...)
     CSV.write("barriers.csv", df)
 end
 
@@ -125,6 +131,82 @@ function build_rhoprime(f_Λnorm, Λ, log_grid)
     end
 end
 
+# utility to make nice log ticks
+function make_log_ticks(lxs::AbstractVector{<:Real}, idealdiv::Int=5)
+    lmin, lmax   = extrema(lxs)
+    tlmin, tlmax = ceil(Int,lmin), floor(Int,lmax)
+    width        = tlmax-tlmin
+    if width == 0
+        return tlmin:tlmax
+    end
+    candidates   = 1:width 
+    divisors     = candidates[findall([width % c == 0 for c in candidates])]
+    bestdiv      = divisors[argmin(abs.(divisors .- idealdiv))] # ideal div implies div+1 actual ticks  
+    return tlmin:(width÷bestdiv):tlmax
+end
+
+###############################################################################
+# simulate run times using a mixture of empirical distribution + GPD tail
+###############################################################################
+
+# fit an empirical distribution to data
+# https://discourse.julialang.org/t/empirical-distribution-type-for-continuous-variables/5676/15?u=miguelbiron
+function EmpiricalDistribution(data::Vector{<:Real})
+    sort!(data)                                 # sort the observations
+    empirical_cdf = ecdf(data)                  # create empirical cdf
+    data_clean = unique(data)                   # remove duplicates to avoid allunique error
+    cdf_data = empirical_cdf.(data_clean)       # apply ecdf to data
+    pmf_data = vcat(cdf_data[1],diff(cdf_data)) # create pmf from the cdf
+    DiscreteNonParametric(data_clean,pmf_data)  # define distribution
+end
+
+abstract type EmpiricalMix{TR <: Real} end
+
+function Base.rand(rng::AbstractRNG, em::EmpiricalMix)
+    rand(rng) < em.p_thresh ? rand(rng, em.tail_dist) : rand(rng, em.bulk_dist)
+end
+function Random.rand!(rng::AbstractRNG, xs::Vector{<:Real}, em::EmpiricalMix)
+    @inbounds for i in eachindex(xs)
+        xs[i] = rand(rng, em)
+    end
+    return xs
+end
+function Base.rand(rng::AbstractRNG, em::EmpiricalMix{TR}, n::Int) where {TR}
+    rand!(rng, Vector{TR}(undef, n), em)
+end
+function init_mix(ts::AbstractVector{<:Real}, p_thresh::Real)
+    t_thresh  = quantile(ts,1-p_thresh)
+    bulk_dist = EmpiricalDistribution(ts[ts .<= t_thresh])
+    cent_tail = ts[ts .> t_thresh] .- t_thresh
+    return (t_thresh, bulk_dist, cent_tail)
+end
+
+# Pareto tail
+struct EmpiricalParetoMix{TR, TDB <: Distribution, TDT <: Distribution} <: EmpiricalMix{TR}
+    p_thresh::TR
+    t_thresh::TR
+    bulk_dist::TDB
+    tail_dist::TDT
+end
+function EmpiricalParetoMix(ts::AbstractVector{<:Real}, p_thresh::Real=0.2)
+    t_thresh, bulk_dist, cts = init_mix(ts, p_thresh)
+    tail_dist = GeneralizedPareto(t_thresh, ParetoSmooth.gpd_fit(cts, 1.0, wip=false, sort_sample=true)...)
+    EmpiricalParetoMix(p_thresh, t_thresh, bulk_dist, tail_dist)
+end
+
+# Weibull tail
+struct EmpiricalWeibullMix{TR, TDB <: Distribution, TDT <: Distribution} <: EmpiricalMix{TR}
+    p_thresh::TR
+    t_thresh::TR
+    bulk_dist::TDB
+    tail_dist::TDT
+end
+function EmpiricalWeibullMix(ts::AbstractVector{<:Real}, p_thresh::Real=0.2)
+    t_thresh, bulk_dist, cent_tail = init_mix(ts, p_thresh)
+    tail_dist = t_thresh + fit_mle(Weibull, cent_tail)
+    EmpiricalParetoMix(p_thresh, t_thresh, bulk_dist, tail_dist)
+end
+
 ###############################################################################
 # runtime plot
 # note: if the max tour is in the first batch of tours processed, then it is
@@ -132,6 +214,21 @@ end
 # with workers=tours.
 ###############################################################################
 
+function flip_max!(ts)
+    K   = length(ts)
+    m,i = findmax(ts)
+    if i <= K/2               # swap position of max so that plot looks more natural (see comment above)
+        j = K-i+1
+        ts[i] = ts[j]
+        ts[j] = m
+    end
+    return (m,i)
+end
+function simulate_tour_times(rng, K, Λ; flip_max=false)
+    ts = Λ*randexp(rng, K)
+    flip_max && flip_max!(ts)
+    ts
+end
 # move time fwd in the queue <=> substract fixed t from all queue priorities
 # key: this does not change relative order! So we can modify their "setindex!"
 # method to avoid the percolating phase. See their original method in the link
@@ -190,49 +287,74 @@ function fmt_thousands(a::Int)
     s
 end
 fmt_thousands(a::AbstractFloat) = fmt_thousands(round(Int, a))
-function make_runtime_plot(;
-    Λ    = 5.,                 # tempering barrier
-    K    = 10000,              # total number of tours
-    Prat = 2. .^ range(-4, 0), # vector of proportions of workers over total number of tours
-    size = (450,225)           # size of the plt
+function plot_busy_workers_over_time(
+    ts::Vector{<:Real};
+    Pvec = 2 .^ (5:9), # vector of number of workers
+    size = (450,225),   # size of the plt
+    xlab = "Elapsed time (hours)", # no need to be accurate, plot is just a demostration # "Elapsed-time / CPU-time (%)",
+    ylab = "Number of busy workers",
     )
     
-    # simulate
-    rng = Xoshiro(1)
-    ts  = Λ*randexp(rng, K)
-    i   = argmax(ts)
-    if i <= K/2               # swap position of max so that plot looks more natural (see comment above)
-        j = K-i+1
-        m = ts[i]
-        ts[i] = ts[j]
-        ts[j] = m
-    end
+    # init
+    mts,_ = flip_max!(ts) # find max and possibly flip it to the last half of the sample
     cpt = sum(ts)
-    Pvec= round.(Int, K .* Prat)
     pq  = PriorityQueue{Int64,Float64}()
     res = [simulate_events(pq,ts,P) for P in Pvec]
     
     # plot the results
     lss = reverse!([:solid, :dash, :dot, :dashdot, :dashdotdot])
     pal = seaborn_colorblind6
-    plt = plot(fontfamily = "Helvetica")
+    plt = plot(
+        fontfamily = "Helvetica",
+        # legendtitle="Avail. workers", # impossible to center
+        background_color_legend = nothing,
+        foreground_color_legend = nothing,
+        xlabel = xlab,
+        ylabel = ylab,
+        size   = size
+    )
     for (i,p) in enumerate(Pvec)
-        #i=1; p = Prat[i]
+        #i=1; p = Pvec[i]
         rs,ws = res[i]
         lab   = fmt_thousands(p)
         plot!(plt, 
-            100*rs/cpt, ws, label=lab, linestyle=lss[i], linewidth=2, color=pal[i]
+            rs, ws, label=lab, linestyle=lss[i], linewidth=2, color=pal[i]
         )
-        scatter!(plt,[100*rs[end]/cpt],[0], label="", color=pal[i],markerstrokewidth=0)
+        scatter!(plt,[rs[end]],[0], label="", color=pal[i],markerstrokewidth=0)
     end
-    plot!(plt,
-        # legendtitle="Avail. workers", # impossible to center
-        foreground_color_legend = nothing,
-        xlabel = "Elapsed-time / CPU-time (%)",
-        ylabel = "Number of busy workers",
-        size   = size
+    scatter!(
+        plt, [mts], [0], markershape = :xcross, markersize=3, 
+        markerstrokewidth=3, color = :black, label = ""
     )
     ys = first(first(yticks(plt)))
     yticks!(plt,ys,fmt_thousands.(ys))
-    savefig(plt, "runtime.pdf")
+    plt
+end
+
+function workers_time_cost_analysis(;
+    ntours = 2^11,
+    nreps  = 30,
+    Pvec   = 2 .^ (0:11)
+    )
+    # build sampler, run tours and get times in milliseconds
+    tm  = ChalLogistic()
+    rng = SplittableRandom(24576)
+    ns  = first(NRSTSampler(tm, rng));
+    ts  = 1000 * NRST.get_time.(parallel_run(ns,rng,ntours=ntours).trvec);
+
+    # draw plot of workers versus time
+    plt = NRSTExp.plot_busy_workers_over_time(ts)
+    savefig(plt, "busy_workers_over_time.pdf")
+
+    # build and save dataframe with simulations of elapsed time and costs
+    ewm = NRSTExp.EmpiricalWeibullMix(ts);
+    pq  = PriorityQueue{Int64,Float64}()
+    res = [begin
+            ts = rand(rng, ewm, ntours)
+            [begin
+              rs,_ = NRSTExp.simulate_events(pq,ts,P)
+              (nw = P, rep = r, et = last(rs), chpc = P*last(rs), clam = sum(rs))
+            end for P in Pvec]
+        end for r in 1:nreps];
+    CSV.write("workers_time_cost.csv", DataFrame(collect(Base.Flatten(res))))
 end
