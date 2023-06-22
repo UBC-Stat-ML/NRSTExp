@@ -297,7 +297,6 @@ function plot_busy_workers_over_time(
     
     # init
     mts,_ = flip_max!(ts) # find max and possibly flip it to the last half of the sample
-    cpt = sum(ts)
     pq  = PriorityQueue{Int64,Float64}()
     res = [simulate_events(pq,ts,P) for P in Pvec]
     
@@ -335,6 +334,7 @@ function workers_time_cost_analysis(;
     ntours = 2^11,
     nreps  = 30,
     Pvec   = 2 .^ (0:11)
+    # size   = (450,225)
     )
     # build sampler, run tours and get times in milliseconds
     tm  = ChalLogistic()
@@ -342,19 +342,63 @@ function workers_time_cost_analysis(;
     ns  = first(NRSTSampler(tm, rng));
     ts  = 1000 * NRST.get_time.(parallel_run(ns,rng,ntours=ntours).trvec);
 
-    # draw plot of workers versus time
-    plt = NRSTExp.plot_busy_workers_over_time(ts)
-    savefig(plt, "busy_workers_over_time.pdf")
+    # store times, compute schedules, and save them
+    open("raw_times.tsv", "w") do io
+        writedlm(io, ts)
+    end
+    flip_max!(ts) # find max and possibly flip it to the last half of the sample, so that plot looks better
+    pq  = PriorityQueue{Int64,Float64}()
+    dfp = vcat((
+        begin
+            rs,ws = simulate_events(pq,ts,P)
+            DataFrame(nw = P, rs = rs, ws = ws)
+        end
+        for P in Pvec)...
+    )
+    CSV.write("busy_workers_over_time.csv", dfp)
+
+    # # draw histogram and plot of workers versus time
+    # ph  = make_tour_times_hist(ts,size=size)
+    # pbw = plot_busy_workers_over_time(ts,size=size)
+    # plt = plot(
+    #     ph, pbw, size=(2*size[1],size[2]), bottom_margin=20px, right_margin=15px,
+    #     left_margin=15px
+    # )
+    # savefig(plt, "tours_busy_workers.pdf")
 
     # build and save dataframe with simulations of elapsed time and costs
-    ewm = NRSTExp.EmpiricalWeibullMix(ts);
+    ewm = EmpiricalWeibullMix(ts);
     pq  = PriorityQueue{Int64,Float64}()
     res = [begin
             ts = rand(rng, ewm, ntours)
+            sts= sum(ts)
             [begin
-              rs,_ = NRSTExp.simulate_events(pq,ts,P)
-              (nw = P, rep = r, et = last(rs), chpc = P*last(rs), clam = sum(rs))
+              rs,_ = simulate_events(pq,ts,P)
+              (nw = P, rep = r, et = last(rs), chpc = P*last(rs), clam = sts)
             end for P in Pvec]
         end for r in 1:nreps];
     CSV.write("workers_time_cost.csv", DataFrame(collect(Base.Flatten(res))))
 end
+
+function make_tour_times_hist(ts::AbstractVector;
+    trunc_prob = 0.025,
+    size = (450,225)
+    )
+    t_trunc = quantile(ts,1-trunc_prob)
+    trunc_ts= map(Base.Fix1(min,t_trunc), ts)
+    ph = histogram(
+        trunc_ts,
+        normalize  = :probability,
+        fontfamily = "Helvetica",
+        label      = "",
+        xlabel     = "CPU time of a tour (hours)",
+        ylabel     = "Probability",
+        size       = size,
+        linecolor  = :match
+    )
+    last_xlab   = last(last(first(xticks(ph))))
+    t_trunc_str = ">$(round(t_trunc, digits=length(last_xlab)-2))"
+    annotate!(ph, t_trunc, 1.8*trunc_prob, text(t_trunc_str, pointsize=8, family="Helvetica"))
+    ph
+end
+
