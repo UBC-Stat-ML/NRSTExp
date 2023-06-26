@@ -65,6 +65,45 @@ function gen_iproc_plots(;kwargs...)
     return
 end
 
+# animation showing how samples change with temp (for slides)
+function make_tempering_gifs()
+    rng = SplittableRandom(442016192)
+
+    # Banana
+    tm = Banana()
+    ns, TE, _ = NRSTSampler(tm,rng)
+    res = parallel_run(ns, rng, NRST.NRSTTrace(ns), TE=TE)
+    X = collect(hcat(res.xarray[end]...)')
+    colorgrad = cgrad([viridis[begin], viridis[end]],ns.np.N+1 )
+    anim = @animate for (i,xs) in enumerate(res.xarray)
+        β = @sprintf("%.2e", ns.np.betas[i])
+        X = collect(hcat(xs...)');
+        scatter(
+            X[:,begin], X[:,end], title = "β = $β", label="",xlabel="x[1]",
+            markercolor = colorgrad[i], 
+            ylabel="x[2]", xlims=(-10,10), ylims=(-50,50)
+        )
+    end
+    gif(anim, "banana.gif", fps=2)
+
+    # Funnel
+    tm = Funnel()
+    ns, TE, _ = NRSTSampler(tm,rng)
+    res = parallel_run(ns, rng, NRST.NRSTTrace(ns), TE=TE);
+    X = collect(hcat(res.xarray[end]...)');
+    colorgrad = cgrad([viridis[begin], viridis[end]],ns.np.N+1 )
+    anim = @animate for (i,xs) in enumerate(res.xarray)
+        β = @sprintf("%.2e", ns.np.betas[i])
+        X = collect(hcat(xs...)');
+        scatter(
+            X[:,begin], X[:,end], title = "β = $β", label="",
+            xlabel="x[1]", ylabel="x[20]", xlims=(-10,10), ylims=(-50,50),
+            markercolor = colorgrad[i], 
+        )
+    end
+    gif(anim, "funnel.gif", fps=2)
+end
+
 # models used in the paper
 function get_tms_and_labels()
     tms  = (Banana(), Funnel(), HierarchicalModel(), MRNATrans(), ThresholdWeibull(), XYModel(8))

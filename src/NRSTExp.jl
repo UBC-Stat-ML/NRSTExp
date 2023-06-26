@@ -1,6 +1,6 @@
 module NRSTExp
 
-using ColorSchemes: seaborn_colorblind, seaborn_colorblind6
+using ColorSchemes: seaborn_colorblind, seaborn_colorblind6, viridis
 using DataFrames
 using DataStructures
 using DelimitedFiles: writedlm
@@ -11,6 +11,7 @@ using NRST
 using ParetoSmooth: ParetoSmooth
 using Plots
 using Plots.PlotMeasures: px
+using Printf
 using Random
 using SplittableRandoms: SplittableRandom
 using StatsBase: ecdf

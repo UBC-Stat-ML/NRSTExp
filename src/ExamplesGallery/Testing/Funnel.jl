@@ -49,17 +49,3 @@ function NRST.V(tm::Funnel{TF}, x) where {TF}
     return acc
 end
 
-# using Printf, Plots, ColorSchemes
-# res = parallel_run(ns, rng, NRST.NRSTTrace(ns), TE=TE);
-# X = collect(hcat(res.xarray[end]...)');
-# colorgrad = cgrad([ColorSchemes.viridis[begin], ColorSchemes.viridis[end]],ns.np.N+1 )
-# anim = @animate for (i,xs) in enumerate(res.xarray)
-#     β = @sprintf("%.2e", ns.np.betas[i])
-#     X = collect(hcat(xs...)');
-#     plt = scatter(
-#         X[:,begin], X[:,end], title = "β = $β", label="",
-#         xlabel="x[1]", ylabel="x[20]", xlims=(-10,10), ylims=(-50,50),
-#         markercolor = colorgrad[i], 
-#     )
-# end
-# gif(anim, "funnel.gif", fps=2)

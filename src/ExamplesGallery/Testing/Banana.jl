@@ -37,19 +37,3 @@ end
 function NRST.V(tm::Banana, x)
     logpdf(tm.x2_ref, last(x)) - logpdf(Normal(abs2(first(x)), tm.σ_x2), last(x))
 end
-
-# using Printf, Plots, ColorSchemes
-# res = parallel_run(ns, rng, NRST.NRSTTrace(ns), TE=TE);
-# X = collect(hcat(res.xarray[end]...)');
-# colorgrad = cgrad([ColorSchemes.viridis[begin], ColorSchemes.viridis[end]],ns.np.N+1 )
-# anim = @animate for (i,xs) in enumerate(res.xarray)
-#     β = @sprintf("%.2e", ns.np.betas[i])
-#     X = collect(hcat(xs...)');
-#     plt = scatter(
-#         X[:,begin], X[:,end], title = "β = $β", label="",xlabel="x[1]",
-#         markercolor = colorgrad[i], 
-#         ylabel="x[2]", xlims=(-10,10), ylims=(-50,50)
-#     )
-# end
-# gif(anim, "banana.gif", fps=2)
-
