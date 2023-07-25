@@ -2,7 +2,6 @@ module ExamplesGallery
 
 using DelimitedFiles: readdlm
 using Distributions
-# using DistributionsAD: filldist
 using DynamicPPL
 using FillArrays: Fill
 using IrrationalConstants: twoπ, log2π, logtwo
@@ -25,7 +24,7 @@ export HalfCauchy
 # Turing
 include("Turing/hierarchical_model.jl")
 include("Turing/challenger.jl")
-# include("Turing/galaxy.jl")
+include("Turing/galaxy.jl")
 include("Turing/MRNATransfection.jl")
 # include("Turing/Titanic.jl")
 # include("Turing/Titanic_no_QR.jl")
@@ -34,7 +33,7 @@ include("Turing/ThresholdWeibull.jl")
 include("Turing/ThresholdLogLogistic.jl")
 export HierarchicalModel, HierarchicalModelTuring
 export ChalLogistic, ChalLogisticTuring
-# export GalaxyTuring
+export GalaxyTuring
 export MRNATrans, MRNATransTuring
 export Titanic, TitanicNoQR, TitanicHS
 export ThresholdWeibull, ThresholdLogLogistic

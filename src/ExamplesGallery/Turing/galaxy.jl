@@ -1,27 +1,35 @@
 @model function _GalaxyTuring(y, b_0, B_0)
-    K = 3
-    α = 1.0 # return to 0.01
+    # hyperparams
+    K   = 3
+    α   = 1.0 # return to 0.01
     c_0 = 2.0
     C_0 = 1.0
-    # γ = [] # is this correct? compare to stan code: (alpha = ones(K)/alpha_0)
-    η ~ Dirichlet(K, α/K)
-    μ ~ filldist(Normal(b_0, B_0), K)
-    inv_σ2 ~ filldist(Gamma(c_0, 1/C_0), K)
-    
+
+    # prior
+    η      ~ Dirichlet(K, α/K)
+    μ      ~ product_distribution(Fill(Normal(b_0, B_0), K))
+    inv_σ2 ~ product_distribution(Fill(Gamma(c_0, 1/C_0), K))
+
+    # likelihood = prod_i sum_k (...)
+    # => loglik = sum_i logsumexp_k(log(...))
+    # acc holds outer sum, lps is passed to LSE
     if DynamicPPL.leafcontext(__context__) !== DynamicPPL.PriorContext()
-        log_eta = log.(η)
+        lη  = log.(η)
+        σ   = inv_σ2 .^ (-1//2)
         lps = similar(η)
+        acc = zero(eltype(y))
         for yᵢ in y
             @inbounds for k in 1:K
-                lps[k] = log_eta[k] + logpdf(Normal(μ[k], sqrt(1/inv_σ2[k])), yᵢ)
-            end  
-            DynamicPPL.@addlogprob! logsumexp(lps)
+                lps[k] = lη[k] + logpdf(Normal(μ[k], σ[k]), yᵢ)
+            end
+            acc += logsumexp(lps)
         end
+        DynamicPPL.@addlogprob! acc
     end
     return y
 end 
 
-observed_range(x) = abs(-(extrema(x)...))
+observed_range(x) = -(-(extrema(x)...))
 
 function GalaxyTuring()
     data = [
