@@ -10,6 +10,7 @@ using LazyArrays
 using LinearAlgebra
 using LogExpFunctions: logistic, log1pexp, logsumexp
 using Random
+using SequentialSamplingModels: LBA
 using Statistics: mean
 using UnPack: @unpack
 using ..NRSTExp: NRSTExp
@@ -25,6 +26,7 @@ export HalfCauchy
 include("Turing/hierarchical_model.jl")
 include("Turing/challenger.jl")
 include("Turing/galaxy.jl")
+include("Turing/LBA.jl")
 include("Turing/MRNATransfection.jl")
 # include("Turing/Titanic.jl")
 # include("Turing/Titanic_no_QR.jl")
@@ -34,6 +36,7 @@ include("Turing/ThresholdLogLogistic.jl")
 export HierarchicalModel, HierarchicalModelTuring
 export ChalLogistic, ChalLogisticTuring
 export GalaxyTuring
+export LBAModel
 export MRNATrans, MRNATransTuring
 export Titanic, TitanicNoQR, TitanicHS
 export ThresholdWeibull, ThresholdLogLogistic

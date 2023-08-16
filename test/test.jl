@@ -19,8 +19,8 @@ using NRSTExp.ExamplesGallery
 using SplittableRandoms
 
 # define and tune an NRSTSampler
-tm = GalaxyTuring();#ThresholdWeibull();#HierarchicalModel();#MRNATrans();#ChalLogistic();#MvNormalTM(3,2.,2.)#Funnel();#Banana();#XYModel(8);#MvNormalTM(32,4.,2.);
-rng = SplittableRandom(57);
+tm = LBAModel();#GalaxyTuring();#ThresholdWeibull();#HierarchicalModel();#MRNATrans();#ChalLogistic();#MvNormalTM(3,2.,2.)#Funnel();#Banana();#XYModel(8);#MvNormalTM(32,4.,2.);
+rng = SplittableRandom(17400);
 ns, TE, Λ = NRSTSampler(
     tm,
     rng,

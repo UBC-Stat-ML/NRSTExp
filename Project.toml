@@ -27,14 +27,12 @@ Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SearchSortedNearest = "e8f3a9d7-1e19-435f-864b-2435d14e4e17"
+SequentialSamplingModels = "0e71a2a6-2b30-4447-8742-d083a85e82d1"
 SplittableRandoms = "8efc31e9-3fb0-4277-b18c-5a3d5d07abad"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
-
-[compat]
-DynamicPPL = "=0.23.0"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
