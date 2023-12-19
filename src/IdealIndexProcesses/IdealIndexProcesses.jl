@@ -2,16 +2,19 @@ module IdealIndexProcesses
 
 using Distributions: Exponential
 using StaticArrays: MVector
-using Statistics: mean, std
 using FillArrays: Fill
-import NRST: renew!, tour!
+using Random: AbstractRNG
+import NRST: renew!, tour!, step!, isinatom, toatom!, get_N
 
-export BouncyPDMP, BouncyMC, run_tours!, toureff
 abstract type Bouncy end
+
+export BouncyPDMP
 include("BouncyPDMP.jl") # PDMP with reflective boundaries in [0,1]
+
+export BouncyMC, NonReversibleBouncy, ReversibleBouncy
 include("BouncyMC.jl")   # Markov chain on 0:N × {-1,1}
 
-# common methods
-toureff(nhs::Vector{<:Int}) = inv(1 + (std(nhs) / mean(nhs))^2)
+# common
+export run_tours!
 
-end
+end # end module IdealIndexProcesses

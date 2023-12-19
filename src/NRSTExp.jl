@@ -14,7 +14,7 @@ using Plots.PlotMeasures: px
 using Printf
 using Random
 using SplittableRandoms: SplittableRandom
-using StatsBase: ecdf
+using StatsBase: ecdf, mean_and_std
 using UnPack: @unpack
 
 export dispatch, gen_iproc_plots

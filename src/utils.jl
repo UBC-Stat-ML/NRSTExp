@@ -2,7 +2,11 @@
 # utils
 ###############################################################################
 
-get_TE(vNs::AbstractVector) = (sum(vNs) ^ 2) / (length(vNs)*sum(abs2, vNs))
+# compute Tour Effectiveness in one pass
+function get_TE(vs::AbstractVector)
+    m,s = mean_and_std(vs; corrected=false) # use 1/n instead of 1/(n-1)
+    inv(one(m) + abs2(s/m)) # E[v]^2 / E[v^2] = E[v]^2 / [E[v]^2 + var[v]] = 1/( 1 + (sd[v]/E[v])^2 )
+end
 
 # common interface for benchmark and hyperparams
 function benchmark_sampler!(
