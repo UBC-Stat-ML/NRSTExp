@@ -63,7 +63,7 @@ end
 # using Plots.PlotMeasures: px
 function plot_check_formulae(res::DataFrame)
     # preprocess
-    Λ = first(res.Λ)
+    Λ = first(res.Lambda)
     res[!,"N_str"] = string.(res[!,"N"])
 
     # common properties
