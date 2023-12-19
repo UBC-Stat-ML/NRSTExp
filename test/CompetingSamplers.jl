@@ -1,3 +1,5 @@
+include("supporting/testutils_CompetingSamplers.jl")
+
 @testset "CompetingSamplers" begin
     # define and tune an NRSTSampler as template
     tm  = ChalLogistic()

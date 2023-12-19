@@ -1,3 +1,5 @@
+include("supporting/testutils_IdealIndexProcesses.jl")
+
 @testset "IdealIndexProcesses" begin
     rng = SplittableRandom(1)
     
@@ -34,7 +36,7 @@
             @test all(iseven, tourls)
             @test all(iseven, vNs)
         end
-        @testset "" begin
+        @testset "ReversibleBouncy" begin
             # is not a periodic Markov chain
             N = 16
             tourls, vNs = run_tours!(BouncyMC{ReversibleBouncy}(.5,N), rng; ntours=512)
@@ -42,6 +44,12 @@
             @test !all(iseven, vNs)
             @test !all(isodd, tourls)
             @test !all(isodd, vNs)
+        end
+        @testset "Theoretical formulae" begin
+            thresh = 0.01
+            res = check_theoretical_formulae()
+            @test all(d -> abs(d) < thresh, res[2:2:end,:TE] .- res[1:2:end,:TE])
+            @test all(d -> abs(d) < thresh, res[2:2:end,:rtprob] .- res[1:2:end,:rtprob])
         end
     end
 end
