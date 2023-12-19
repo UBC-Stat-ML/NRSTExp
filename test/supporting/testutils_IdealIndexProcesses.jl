@@ -61,7 +61,7 @@ end
 # visual check of the output of check_theoretical_formulae
 # using StatsPlots
 # using Plots.PlotMeasures: px
-function plot_check_formulae(res::DataFrames)
+function plot_check_formulae(res::DataFrame)
     # preprocess
     Λ = first(res.Λ)
     res[!,"N_str"] = string.(res[!,"N"])
