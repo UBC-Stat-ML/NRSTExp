@@ -41,10 +41,10 @@ function check_theoretical_formulae(;
     rng    = SplittableRandom(seed)
     times  = Vector{Int}(undef, ntours)
     counts = similar(times)
-    mapreduce(vcat,(ReversibleBouncy,NonReversibleBouncy)) do TD
-        dfs = map(Ns) do N
-            dfs = map(1:n_rep) do rep
-                R = make_sym_rej_mat(rng, N, Λ)
+    dfs = map(Ns) do N
+        dfs = map(1:n_rep) do rep
+            R = make_sym_rej_mat(rng, N, Λ)
+            mapreduce(vcat,(ReversibleBouncy,NonReversibleBouncy)) do TD
                 b = BouncyMC{TD}(R)
                 run_tours!(b, rng, times, counts)
                 vcat(
@@ -52,10 +52,10 @@ function check_theoretical_formulae(;
                     get_estimated_quantities(b, counts, Λ, rep)
                 )
             end
-            vcat(dfs...)
         end
         vcat(dfs...)
     end
+    vcat(dfs...)
 end
 
 # visual check of the output of check_theoretical_formulae
@@ -106,6 +106,5 @@ function plot_check_formulae(res::DataFrame)
         p = plot(p_rtp, p_TE, layout=(2,1))
         return p
     end
-    p = plot(plots...,layout=(1,2), size=(700,600))
-    savefig(p, "test_exact_formulae.pdf")
+    plot(plots...,layout=(1,2), size=(700,600))
 end

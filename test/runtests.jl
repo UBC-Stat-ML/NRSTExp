@@ -1,17 +1,4 @@
-using DataFrames
-using FillArrays
-using LinearAlgebra
-using LogExpFunctions
-using Random
-using SplittableRandoms
-using Statistics
-using Test
-
-using NRST
-using NRSTExp
-using NRSTExp.ExamplesGallery
-using NRSTExp.CompetingSamplers
-using NRSTExp.IdealIndexProcesses
+include("supporting/setup.jl")
 
 @testset "NRSTExp" begin
     include("IdealIndexProcesses.jl")
