@@ -84,7 +84,8 @@ function plot_check_formulae(res::DataFrame)
             # xlab=xlab,
             ylab= flag ? "" : "Probability of reaching top",
             left_margin = mar, bottom_margin = mar,
-            title = flag ? "Reversible" : "Non-reversible"
+            title = flag ? "Reversible" : "Non-reversible",
+            linecolor = :black # avoid "double-border" in the boxes
         )
         lim = flag ? 0.0 : inv(1+Λ)
         hline!(p_rtp, [lim], linestyle=:dot, label="lim N→∞")
@@ -99,6 +100,7 @@ function plot_check_formulae(res::DataFrame)
             xlab=xlab,
             ylab=flag ? "" : "Tour Effectiveness",
             left_margin = mar, bottom_margin = mar,
+            linecolor = :black # avoid "double-border" in the boxes
         )
         lim = flag ? 0.0 : inv(1+2Λ)
         hline!(p_TE, [lim], linestyle=:dot, label="lim N→∞")
