@@ -62,7 +62,6 @@ function gen_iproc_plots(;kwargs...)
     pgt      = plot_trace_iproc(res_gt;alg_name="ST",kwargs...)
     savefig(pnrst,"index_process_nrst.pdf")
     savefig(pgt,"index_process_gt.pdf")
-    return
 end
 
 # animation showing how samples change with temp (for slides)
