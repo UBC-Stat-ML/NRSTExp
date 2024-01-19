@@ -51,14 +51,14 @@ end
 
 function gen_iproc_plots(;kwargs...)
     # define and tune an NRSTSampler as template
+    seed     = 3509
     tm       = MvNormalTM(3,2.,2.)              # Λ ≈ 1
-    new_rng  = quote SplittableRandom(3509) end # re-use this call to make both samplers run with the same stream
-    ns,_,_   = NRSTSampler(tm, eval(new_rng))
+    ns,_,_   = NRSTSampler(tm, SplittableRandom(seed))
     ntours   = 512
-    res_nrst = parallel_run(ns,eval(new_rng),NRST.NRSTTrace(ns),ntours=ntours);
+    res_nrst = parallel_run(ns,SplittableRandom(seed),NRST.NRSTTrace(ns),ntours=ntours);
     pnrst    = plot_trace_iproc(res_nrst;alg_name="NRST",kwargs...)
     gt       = GT95Sampler(ns);
-    res_gt   = parallel_run(gt,eval(new_rng),NRST.NRSTTrace(gt),ntours=ntours);
+    res_gt   = parallel_run(gt,SplittableRandom(seed),NRST.NRSTTrace(gt),ntours=ntours);
     pgt      = plot_trace_iproc(res_gt;alg_name="ST",kwargs...)
     savefig(pnrst,"index_process_nrst.pdf")
     savefig(pgt,"index_process_gt.pdf")
